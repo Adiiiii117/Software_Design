@@ -3,23 +3,22 @@ using UnityEngine;
 public class HoldPieceUI : MonoBehaviour
 {
     [Header("References")]
-    public Spawner spawner;                 // Spawnerを参照
-    public Transform displayRoot;           // 表示位置の親Transform
-    public Tetromino[] previewPrefabs;      // 表示に使うテトロミノのプレハブ群
+    public Spawner spawner;                 // Spawner を参照
+    public Transform displayRoot;           // 表示位置の親 Transform
+    public Tetromino[] previewPrefabs;      // 表示用テトロミノのプレハブ群
 
     [Header("Layout")]
-    public float itemScale = 0.5f;          // ミノの表示スケール
+    public float itemScale = 0.5f;          // ミノ表示スケール
     public Vector3 itemOffset = Vector3.zero; // 表示位置の微調整
 
     private GameObject currentPreview;
 
-    // 有効化時にSpawnerのイベント購読と初期描画
+    // 有効化時に Spawner のイベント購読と初期描画
     private void OnEnable()
     {
         if (spawner != null)
         {
-            spawner.QueueChanged += Refresh;
-            spawner.OnHoldPieceReleased += Clear;
+            spawner.QueueChanged += Refresh;  // ★ OnHoldPieceReleased は廃止
         }
         Refresh();
     }
@@ -30,7 +29,6 @@ public class HoldPieceUI : MonoBehaviour
         if (spawner != null)
         {
             spawner.QueueChanged -= Refresh;
-            spawner.OnHoldPieceReleased -= Clear;
         }
         Clear();
     }
@@ -65,6 +63,7 @@ public class HoldPieceUI : MonoBehaviour
         currentPreview.transform.localRotation = Quaternion.identity;
         currentPreview.transform.localScale = Vector3.one * itemScale;
 
+        // 余計な動きを止める（プレハブ側のスクリプト/コライダー/Rigidbody/ゴースト等）
         foreach (var mb in currentPreview.GetComponentsInChildren<MonoBehaviour>())
             mb.enabled = false;
         foreach (var col in currentPreview.GetComponentsInChildren<Collider2D>())
