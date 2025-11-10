@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class Spawner : MonoBehaviour
 {
@@ -26,6 +27,18 @@ public class Spawner : MonoBehaviour
     private bool canHold = true;
     private bool nextHoldSpawn = false;
 
+    public enum SpawnMode
+{
+    Normal,     // いままで通り7種ランダム
+    OnlyT       // Tミノだけ出す
+}
+
+[Header("Mode")]
+public SpawnMode spawnMode = SpawnMode.Normal;
+
+// tetrominoPrefabs の中で T が何番目か（I,J,L,O,S,T,Z)
+public int tIndex = 5;
+
     // シーン開始時の初期化処理
     private void Awake()
     {
@@ -33,10 +46,21 @@ public class Spawner : MonoBehaviour
         RefillBag();
     }
 
-    // シーン開始時のセットアップ確認と最初のミノ生成
     private void Start()
     {
         if (!ValidateSetup()) return;
+
+        // ★ シーン名からモードを自動判定
+        string sceneName = SceneManager.GetActiveScene().name;
+        if (sceneName.Contains("TSD_E") || sceneName.Contains("TST_E"))
+        {
+            spawnMode = SpawnMode.OnlyT;  // 初級：TSD_E → Tだけ出す
+        }
+        else
+        {
+            spawnMode = SpawnMode.Normal; // それ以外 → 通常テトリス
+        }
+
         if (spawnOnStart) Spawn();
     }
 
@@ -94,13 +118,27 @@ public class Spawner : MonoBehaviour
     // 指定数分の次のミノの種類を取得する
     public int[] GetUpcoming(int count)
     {
-        if (tetrominoPrefabs == null || tetrominoPrefabs.Length == 0) return Array.Empty<int>();
+        if (tetrominoPrefabs == null || tetrominoPrefabs.Length == 0)
+            return System.Array.Empty<int>();
+
+        // ★ 初級モードでは Next も全部 T にする
+        if (spawnMode == SpawnMode.OnlyT)
+        {
+            int idx = Mathf.Clamp(tIndex, 0, tetrominoPrefabs.Length - 1);
+            int[] outIdx = new int[Mathf.Max(0, count)];
+            for (int i = 0; i < outIdx.Length; i++)
+                outIdx[i] = idx;
+            return outIdx;
+        }
+
+        // 通常モード（元の処理）
         while (previewCache.Count < count) RefillBag();
         int take = Mathf.Min(count, previewCache.Count);
-        int[] outIdx = new int[take];
-        for (int i = 0; i < take; i++) outIdx[i] = previewCache[i];
-        return outIdx;
+        int[] outIndices = new int[take];
+        for (int i = 0; i < take; i++) outIndices[i] = previewCache[i];
+        return outIndices;
     }
+
 
     // 現在ホールドされているミノのindexを返す
     public int? GetHeldIndex() => heldIndex;
@@ -111,6 +149,14 @@ public class Spawner : MonoBehaviour
     // バッグから次のミノを生成する
     private Tetromino SpawnFromBag()
     {
+        // ★ 初級モード：バッグを使わず T だけ出す
+        if (spawnMode == SpawnMode.OnlyT)
+        {
+            int idx = Mathf.Clamp(tIndex, 0, tetrominoPrefabs.Length - 1);
+            return SpawnByIndex(idx, fromHold: false);
+        }
+
+        // ここから下は今までの処理
         if (bagQueue.Count <= Mathf.Max(1, tetrominoPrefabs != null ? tetrominoPrefabs.Length : 0))
             RefillBag();
 
@@ -120,13 +166,14 @@ public class Spawner : MonoBehaviour
             return null;
         }
 
-        int idx = bagQueue.Dequeue();
+        int nextIdx = bagQueue.Dequeue();
 
         if (previewCache.Count > 0) previewCache.RemoveAt(0);
         QueueChanged?.Invoke();
 
-        return SpawnByIndex(idx, fromHold: false);
+        return SpawnByIndex(nextIdx, fromHold: false);
     }
+
 
     // 指定されたindexのミノを生成する
     private Tetromino SpawnByIndex(int idx, bool fromHold)

@@ -112,6 +112,23 @@ public class Board : MonoBehaviour
         }
     }
 
+    // 追加：消えたライン数を返すバージョン
+    public int ClearLinesAndGetCount()
+    {
+        int cleared = 0;
+        for (int y = 0; y < size.y; y++)
+        {
+            if (IsLineFull(y))
+            {
+                ClearLine(y);
+                ShiftLinesDown(y + 1);
+                y--;
+                cleared++;
+            }
+        }
+        return cleared;
+    }
+
     // 指定行より上のすべての行を1段下に移動する
     private void ShiftLinesDown(int startY)
     {
@@ -143,5 +160,13 @@ public class Board : MonoBehaviour
                 }
             }
         }
+    }
+
+    public bool IsCellOccupiedOrOutOfBounds(Vector2Int cell)
+    {
+        if (cell.x < 0 || cell.x >= size.x || cell.y < 0 || cell.y >= size.y)
+            return true; // 盤外は「埋まっている」とみなす
+
+        return grid[cell.x, cell.y] != null;
     }
 }

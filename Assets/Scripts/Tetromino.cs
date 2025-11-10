@@ -1,42 +1,47 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class Tetromino : MonoBehaviour
 {
     [Header("Fall Speeds")]
-    public float normalFallSpeed = 1f; // 通常落下速度
-    public float fastDropSpeed = 12f; // 下加速落下速度
+    public float normalFallSpeed = 1f;   // 通常落下速度
+    public float fastDropSpeed = 12f;    // 下加速落下速度
 
     [Header("Grounded Action Limits")]
-    public int groundedMoveAllowance = 14; // 地面接触時の移動許容回数
-    public int groundedRotateAllowance = 15; // 地面接触時の回転許容回数 
+    public int groundedMoveAllowance = 14;      // 地面接触時の移動許容回数
+    public int groundedRotateAllowance = 15;    // 地面接触時の回転許容回数 
 
     [Header("Inactivity Lock")]
-    public float inactivitySeconds = 0.9f; // 無操作後にロックするまでの秒数
+    public float inactivitySeconds = 0.9f;      // 無操作後にロックするまでの秒数
 
     [Header("References")]
     public Board board;
-    public Transform pivotOverride; 
+    public Transform pivotOverride;
     public GhostPiece ghost;
 
-    public int typeIndex; // ミノの種類インデックス
-    public bool spawnedFromHold; // ホールドから生成されたか否か
+    public int typeIndex;              // ミノの種類インデックス (I,J,L,O,S,T,Z など)
+    public bool spawnedFromHold;       // ホールドから生成されたか
 
-    public Transform[] Cells { get; private set; } // ミノのブロックセル配列
+    public Transform[] Cells { get; private set; } // ミノを構成する4つのブロック
 
-    private Transform _pivot; // ミノの回転の基準点
-    private bool locked; // ミノがロックされたか否か
-    private bool fastDropping; // 下加速中か否か
-    private float accumulatedFall; // 自動落下の累積値
+    private Transform _pivot;           // 回転の基準点
+    private bool locked;               // ロック済みかどうか
+    private bool fastDropping;         // 下加速中かどうか
+    private float accumulatedFall;     // 自動落下の累積値
 
-    private bool grounded; // ミノが地面に接触しているか否か
-    private bool groundedAllowanceInitialized; // 地面接触時の許容回数が初期化済みか否か
-    private int movesWhenGrounded; // 地面接触時の残り移動許容回数
-    private int rotatesLeftWhenGrounded; // 地面接触時の残り回転許容回数 
+    private bool grounded;                     // 地面接触中かどうか
+    private bool groundedAllowanceInitialized; // 接地許容回数が初期化されたか
+    private int movesWhenGrounded;             // 接地中の残り移動回数
+    private int rotatesLeftWhenGrounded;       // 接地中の残り回転回数
 
-    private bool inactivityArmed = false;
-    private float lastActionTime = -1f;
+    private bool inactivityArmed = false;      // 無操作ロックタイマー起動済みか
+    private float lastActionTime = -1f;        // 最後の操作時刻
+
+    // シーン別挙動用フラグ
+    private bool disableAutoFall = false;      // 自動落下を無効にするか（TSD_N用）
+    private bool allowUpMove = false;          // 上移動を許可するか（TSD_N用）
 
     // ミノ生成時の初期設定
     private void Awake()
@@ -74,6 +79,15 @@ public class Tetromino : MonoBehaviour
         {
             Debug.Log("Game Over (spawn invalid)");
             enabled = false;
+            return;
+        }
+
+        // シーン名に TSD_N を含む場合は自動落下を無効化＋上移動を許可（中級モード）
+        string sceneName = SceneManager.GetActiveScene().name;
+        if (sceneName.Contains("TSD_N"))
+        {
+            disableAutoFall = true;
+            allowUpMove = true;
         }
     }
 
@@ -87,6 +101,8 @@ public class Tetromino : MonoBehaviour
         HandleFalling();
         TryAutoLockIfNeeded();
     }
+
+    
 
     // ミノが地面または他のミノに接触しているかを判定
     private void UpdateGroundedState()
@@ -126,13 +142,15 @@ public class Tetromino : MonoBehaviour
     // プレイヤーの入力を処理
     private void HandleInput()
     {
+        // ホールド (C or LeftShift)
         if (Input.GetKeyDown(KeyCode.C) || Input.GetKeyDown(KeyCode.LeftShift))
         {
             var spawner = FindObjectOfType<Spawner>();
             if (spawner != null && spawner.RequestHold(this)) return;
         }
 
-        if (Input.GetKeyDown(KeyCode.A))
+        // 左移動 (A)
+        if (Input.GetKeyDown(KeyCode.LeftArrow))
         {
             if (!grounded || movesWhenGrounded > 0)
             {
@@ -148,7 +166,8 @@ public class Tetromino : MonoBehaviour
             }
         }
 
-        if (Input.GetKeyDown(KeyCode.D))
+        // 右移動 (D)
+        if (Input.GetKeyDown(KeyCode.RightArrow))
         {
             if (!grounded || movesWhenGrounded > 0)
             {
@@ -164,17 +183,29 @@ public class Tetromino : MonoBehaviour
             }
         }
 
-        if (Input.GetKeyDown(KeyCode.RightArrow)) TryRotateAndRecord(+1);
-        if (Input.GetKeyDown(KeyCode.LeftArrow)) TryRotateAndRecord(-1);
+        // 上移動 (↑) - TSD_N シーンのみ有効
+        if (allowUpMove && Input.GetKeyDown(KeyCode.UpArrow))
+        {
+            if (TryMove(Vector3.up))
+            {
+                ArmInactivityTimerNow();
+            }
+        }
 
+        // 回転 (→: 右回転, ←: 左回転)
+        if (Input.GetKeyDown(KeyCode.D)) TryRotateAndRecord(+1);
+        if (Input.GetKeyDown(KeyCode.A))  TryRotateAndRecord(-1);
+
+        // ハードドロップ (Space)
         if (Input.GetKeyDown(KeyCode.Space))
         {
             while (TryMove(Vector3.down)) { }
             Lock();
         }
 
+        // ソフトドロップ (↓)
         if (Input.GetKeyDown(KeyCode.DownArrow)) fastDropping = true;
-        if (Input.GetKeyUp(KeyCode.DownArrow)) fastDropping = false;
+        if (Input.GetKeyUp(KeyCode.DownArrow))   fastDropping = false;
     }
 
     // 回転処理と許容回数管理
@@ -204,7 +235,10 @@ public class Tetromino : MonoBehaviour
     // 自動落下処理
     private void HandleFalling()
     {
-        float speed = fastDropping ? fastDropSpeed : normalFallSpeed;
+        // TSD_N では自動落下を0にする（↓キー・Spaceは別扱い）
+        float baseSpeed = disableAutoFall ? 0f : normalFallSpeed;
+        float speed = fastDropping ? fastDropSpeed : baseSpeed;
+
         accumulatedFall += speed * Time.deltaTime;
 
         while (accumulatedFall >= 1f)
@@ -262,7 +296,27 @@ public class Tetromino : MonoBehaviour
     // ミノを指定方向に移動する
     private bool TryMove(Vector3 delta)
     {
-        if (!board.IsValidPosition(this, delta)) return false;
+        // ★ 上方向に動かすときだけ「見えている高さ」を超えないようにチェック
+        if (delta == Vector3.up)
+        {
+            foreach (var cell in Cells)
+            {
+                // このブロックが動いた先のグリッド座標
+                Vector2Int gridPos = board.WorldToGrid(cell.position + delta);
+
+                // visibleSize.y 以上なら、枠より上にはみ出すので移動禁止
+                if (gridPos.y >= board.visibleSize.y)
+                {
+                    return false;
+                }
+            }
+        }
+
+        // いつもの当たり判定（盤外・他ブロックとの衝突）
+        if (!board.IsValidPosition(this, delta))
+            return false;
+
+        // ここまで来たら安全なので移動
         transform.position += delta;
         return true;
     }
@@ -278,7 +332,7 @@ public class Tetromino : MonoBehaviour
             Vector3.zero,
             Vector3.right, Vector3.left,
             Vector3.up, Vector3.down,
-            Vector3.right*2, Vector3.left*2
+            Vector3.right * 2, Vector3.left * 2
         };
 
         foreach (var k in kicks)
@@ -314,14 +368,34 @@ public class Tetromino : MonoBehaviour
             ghost = null;
         }
 
+        // 子ブロックをいったん親から外す（Board.SetPieceで再アタッチされる）
         foreach (var cell in Cells)
         {
             if (cell != null) cell.SetParent(null, true);
         }
 
+        // 盤面に固定
         board.SetPiece(this);
-        board.ClearLines();
 
+        // 何ライン消えたかを取得（Board に ClearLinesAndGetCount() がある前提）
+        int linesCleared = board.ClearLinesAndGetCount();
+
+        // TSpinDoubleJudge へ通知（存在する場合のみ）
+        var judge = FindObjectOfType<TSpinDoubleJudge>();
+        if (judge != null)
+        {
+            judge.OnPieceLocked(this, linesCleared);
+
+            // クリアでステージが終了しているなら、次のミノは出さない
+            if (judge.IsStageCleared)
+            {
+                enabled = false;
+                Destroy(gameObject);
+                return;
+            }
+        }
+
+        // 通常進行：次のミノを出す
         enabled = false;
         StartCoroutine(SpawnNextFrame());
     }
