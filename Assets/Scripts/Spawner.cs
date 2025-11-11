@@ -16,32 +16,38 @@ public class Spawner : MonoBehaviour
     public Vector2Int spawnCell = new Vector2Int(5, 20);
     public bool spawnOnStart = true;
 
+    public enum SpawnMode
+    {
+        Normal,
+        OnlyT,
+        Sequence
+    }
+
+    [Header("Mode")]
+    public SpawnMode spawnMode = SpawnMode.Normal;
+
+    [Tooltip("tetrominoPrefabs の中で T が何番目か (I,J,L,O,S,T,Z なら 5)")]
+    public int tIndex = 5;
+
+    // 7種ランダムバッグ
     private readonly Queue<int> bagQueue = new Queue<int>();
+
+    // 固定シーケンス（TSD_B などで使用）
+    private readonly Queue<int> sequenceQueue = new Queue<int>();
+
     private System.Random rng;
-    private readonly List<int> previewCache = new List<int>();
 
     public event Action QueueChanged;
     public event Action OnHoldPieceReleased;
 
     private int? heldIndex = null;
     private bool canHold = true;
-    private bool nextHoldSpawn = false;
+    private bool nextHoldSpawn = false; // 互換性のために残しているが、現在は使用していない
 
-    public enum SpawnMode
-{
-    Normal,     // いままで通り7種ランダム
-    OnlyT       // Tミノだけ出す
-}
-
-[Header("Mode")]
-public SpawnMode spawnMode = SpawnMode.Normal;
-
-// tetrominoPrefabs の中で T が何番目か（I,J,L,O,S,T,Z)
-public int tIndex = 5;
-
-    // シーン開始時の初期化処理
+    // 初期化
     private void Awake()
     {
+        rng = new System.Random();
         RefillBag();
         RefillBag();
     }
@@ -50,132 +56,266 @@ public int tIndex = 5;
     {
         if (!ValidateSetup()) return;
 
-        // ★ シーン名からモードを自動判定
-        string sceneName = SceneManager.GetActiveScene().name;
-        if (sceneName.Contains("TSD_E") || sceneName.Contains("TST_E"))
-        {
-            spawnMode = SpawnMode.OnlyT;  // 初級：TSD_E → Tだけ出す
-        }
-        else
-        {
-            spawnMode = SpawnMode.Normal; // それ以外 → 通常テトリス
-        }
+        ConfigureModeFromScene();
 
-        if (spawnOnStart) Spawn();
+        if (spawnOnStart)
+        {
+            Spawn();
+        }
     }
 
-    // 次のミノを生成する
+    /// <summary>
+    /// シーン名からモードや固定シーケンスを設定する
+    /// </summary>
+    private void ConfigureModeFromScene()
+    {
+        string sceneName = SceneManager.GetActiveScene().name;
+
+        // デフォルトは通常モード
+        spawnMode = SpawnMode.Normal;
+
+        // ★ 初級：TSD_E / TST_E → Tミノのみ
+        if (sceneName.Contains("TSD_E") || sceneName.Contains("TST_E"))
+        {
+            spawnMode = SpawnMode.OnlyT;
+        }
+
+        // ★ Basic モード：TSD_B_??? → 固定シーケンス
+        if (sceneName.Contains("TSD_B"))
+        {
+            spawnMode = SpawnMode.Sequence;
+
+            // 例: TSD_B_OT → O → T
+            if (sceneName.Contains("_IT"))
+            {
+                EnqueueSequence('I', 'T');
+            }
+            // 例: TSD_B_JT → J → T
+            else if (sceneName.Contains("_JT"))
+            {
+                EnqueueSequence('J', 'T');
+            }
+            // 例: TSD_B_LT → L → T
+            else if (sceneName.Contains("_LT"))
+            {
+                EnqueueSequence('L', 'T');
+            }
+
+            else if (sceneName.Contains("_OT"))
+            {
+                EnqueueSequence('O', 'T');
+            }
+            else if (sceneName.Contains("_ST"))
+            {
+                EnqueueSequence('S', 'T');
+            }
+            else if (sceneName.Contains("_TT"))
+            {
+                EnqueueSequence('T', 'T');
+            }
+            else if (sceneName.Contains("_ZT"))
+            {
+                EnqueueSequence('Z', 'T');
+            }
+            else
+            {
+                // デフォルト: T だけ1つ出す（必要に応じて拡張）
+                EnqueueSequence('T');
+            }
+        }
+
+        // 将来 TST_B_* などを追加したい場合も、
+        // 同じように sceneName を見て sequenceQueue に積めばOK。
+    }
+
+    /// <summary>
+    /// 固定シーケンスにミノを追加する（文字は I,J,L,O,S,T,Z を想定）
+    /// </summary>
+    private void EnqueueSequence(params char[] letters)
+    {
+        foreach (char c in letters)
+        {
+            int idx = GetIndexForLetter(c);
+            if (idx >= 0 && idx < tetrominoPrefabs.Length)
+            {
+                sequenceQueue.Enqueue(idx);
+            }
+        }
+    }
+
+    /// <summary>
+    /// ミノの種類文字から tetrominoPrefabs の index を返す
+    /// </summary>
+    private int GetIndexForLetter(char letter)
+    {
+        switch (letter)
+        {
+            case 'I': return 0;
+            case 'J': return 1;
+            case 'L': return 2;
+            case 'O': return 3;
+            case 'S': return 4;
+            case 'T': return 5;
+            case 'Z': return 6;
+            default:
+                return Mathf.Clamp(tIndex, 0, tetrominoPrefabs.Length - 1);
+        }
+    }
+
+    /// <summary>
+    /// 次のミノを生成する
+    /// </summary>
     public Tetromino Spawn()
     {
         if (!ValidateSetup()) return null;
+
         canHold = true;
 
-        if (nextHoldSpawn && heldIndex.HasValue)
+        int idx = GetNextSpawnIndex();
+        if (idx < 0)
         {
-            int idx = heldIndex.Value;
-            nextHoldSpawn = false;
-            heldIndex = null;
-
-            var t = SpawnByIndex(idx, fromHold: true);
-            OnHoldPieceReleased?.Invoke();
-            return t;
+            Debug.LogWarning("Spawner: 生成できるミノがありません。");
+            return null;
         }
 
-        return SpawnFromBag();
+        QueueChanged?.Invoke();
+        return SpawnByIndex(idx, fromHold: false);
     }
 
-    // ホールドを実行する
+    /// <summary>
+    /// 今後出てくるミノの index を count 個返す（Next表示用）
+    /// </summary>
+    public int[] GetUpcoming(int count)
+    {
+        if (!ValidateSetup() || count <= 0)
+            return Array.Empty<int>();
+
+        List<int> result = new List<int>(count);
+
+        // 固定シーケンスを優先して表示（ただし消費はしない）
+        if (sequenceQueue.Count > 0)
+        {
+            int[] seq = sequenceQueue.ToArray();
+            for (int i = 0; i < seq.Length && result.Count < count; i++)
+            {
+                result.Add(seq[i]);
+            }
+        }
+
+        // OnlyT モード
+        if (spawnMode == SpawnMode.OnlyT && result.Count < count)
+        {
+            int idxT = Mathf.Clamp(tIndex, 0, tetrominoPrefabs.Length - 1);
+            while (result.Count < count)
+            {
+                result.Add(idxT);
+            }
+            return result.ToArray();
+        }
+
+        // 残りはバッグの内容を参照（消費はしない）
+        if (result.Count < count)
+        {
+            int[] bagArr = bagQueue.ToArray();
+            for (int i = 0; i < bagArr.Length && result.Count < count; i++)
+            {
+                result.Add(bagArr[i]);
+            }
+        }
+
+        return result.ToArray();
+    }
+
+    /// <summary>
+    /// ホールドを実行する
+    /// </summary>
     public bool RequestHold(Tetromino current)
     {
         if (!ValidateSetup()) return false;
-        if (nextHoldSpawn) return false;
-        if (current.spawnedFromHold) return false;
+        if (current == null) return false;
         if (!canHold) return false;
 
         int curType = current.typeIndex;
         canHold = false;
 
-        if (current.ghost != null) Destroy(current.ghost.gameObject);
+        if (current.ghost != null)
+            Destroy(current.ghost.gameObject);
         Destroy(current.gameObject);
+
+        int spawnIdx = -1;
+        bool fromHold = false;
 
         if (heldIndex == null)
         {
+            // 初回ホールド：現在のミノを保存し、新しいミノを通常ルールで出す
             heldIndex = curType;
-            nextHoldSpawn = true;
-            SpawnFromBag();
+            spawnIdx = GetNextSpawnIndex();
         }
         else
         {
-            int swapped = heldIndex.Value;
+            // 2回目以降：ホールドしていたミノと入れ替え
+            int tmp = heldIndex.Value;
             heldIndex = curType;
-            nextHoldSpawn = true;
-            SpawnFromBag();
+            spawnIdx = tmp;
+            fromHold = true;
         }
 
+        if (spawnIdx < 0)
+        {
+            Debug.LogWarning("Spawner: ホールド後に出すミノがありません。");
+            return false;
+        }
+
+        Tetromino t = SpawnByIndex(spawnIdx, fromHold);
+        if (fromHold)
+        {
+            OnHoldPieceReleased?.Invoke();
+        }
+
+        QueueChanged?.Invoke();
         return true;
     }
 
-    // 指定数分の次のミノの種類を取得する
-    public int[] GetUpcoming(int count)
-    {
-        if (tetrominoPrefabs == null || tetrominoPrefabs.Length == 0)
-            return System.Array.Empty<int>();
-
-        // ★ 初級モードでは Next も全部 T にする
-        if (spawnMode == SpawnMode.OnlyT)
-        {
-            int idx = Mathf.Clamp(tIndex, 0, tetrominoPrefabs.Length - 1);
-            int[] outIdx = new int[Mathf.Max(0, count)];
-            for (int i = 0; i < outIdx.Length; i++)
-                outIdx[i] = idx;
-            return outIdx;
-        }
-
-        // 通常モード（元の処理）
-        while (previewCache.Count < count) RefillBag();
-        int take = Mathf.Min(count, previewCache.Count);
-        int[] outIndices = new int[take];
-        for (int i = 0; i < take; i++) outIndices[i] = previewCache[i];
-        return outIndices;
-    }
-
-
-    // 現在ホールドされているミノのindexを返す
+    /// <summary>現在ホールド中のミノ index を返す（なければ null）</summary>
     public int? GetHeldIndex() => heldIndex;
 
-    // 現在ホールド可能かどうかを返す
+    /// <summary>現在ホールド可能かどうかを返す</summary>
     public bool CanHoldNow() => canHold && !nextHoldSpawn;
 
-    // バッグから次のミノを生成する
-    private Tetromino SpawnFromBag()
+    /// <summary>
+    /// ルールに従って「次に出すべきミノ index」を決めて返す
+    /// </summary>
+    private int GetNextSpawnIndex()
     {
-        // ★ 初級モード：バッグを使わず T だけ出す
-        if (spawnMode == SpawnMode.OnlyT)
+        // 1) 固定シーケンスが残っていればそれを優先
+        if (spawnMode == SpawnMode.Sequence && sequenceQueue.Count > 0)
         {
-            int idx = Mathf.Clamp(tIndex, 0, tetrominoPrefabs.Length - 1);
-            return SpawnByIndex(idx, fromHold: false);
+            return sequenceQueue.Dequeue();
         }
 
-        // ここから下は今までの処理
+        // 2) OnlyT モード
+        if (spawnMode == SpawnMode.OnlyT)
+        {
+            return Mathf.Clamp(tIndex, 0, tetrominoPrefabs.Length - 1);
+        }
+
+        // 3) 通常バッグから
         if (bagQueue.Count <= Mathf.Max(1, tetrominoPrefabs != null ? tetrominoPrefabs.Length : 0))
+        {
             RefillBag();
+        }
 
         if (bagQueue.Count == 0)
         {
-            Debug.LogWarning("Spawner: bagQueue が空です。");
-            return null;
+            return -1;
         }
 
-        int nextIdx = bagQueue.Dequeue();
-
-        if (previewCache.Count > 0) previewCache.RemoveAt(0);
-        QueueChanged?.Invoke();
-
-        return SpawnByIndex(nextIdx, fromHold: false);
+        return bagQueue.Dequeue();
     }
 
-
-    // 指定されたindexのミノを生成する
+    /// <summary>
+    /// 指定された index のミノを生成する
+    /// </summary>
     private Tetromino SpawnByIndex(int idx, bool fromHold)
     {
         if (tetrominoPrefabs == null || idx < 0 || idx >= tetrominoPrefabs.Length)
@@ -185,21 +325,28 @@ public int tIndex = 5;
         }
 
         Tetromino prefab = tetrominoPrefabs[idx];
-        Vector3 spawnPos;
 
-        try { spawnPos = board.GridToWorld(spawnCell); }
-        catch { spawnPos = new Vector3(board.origin.x + spawnCell.x, board.origin.y + spawnCell.y, 0f); }
+        Vector3 spawnPos;
+        try
+        {
+            spawnPos = board.GridToWorld(spawnCell);
+        }
+        catch
+        {
+            spawnPos = new Vector3(board.origin.x + spawnCell.x, board.origin.y + spawnCell.y, 0f);
+        }
 
         Tetromino piece = Instantiate(prefab, spawnPos, Quaternion.identity);
         piece.board = board;
         piece.typeIndex = idx;
         piece.spawnedFromHold = fromHold;
 
+        // ゴーストの生成
         if (ghostPrefabs != null &&
-            idx >= 0 && idx < ghostPrefabs.Length &&
+            ghostPrefabs.Length > idx &&
             ghostPrefabs[idx] != null)
         {
-            GhostPiece ghost = Instantiate(ghostPrefabs[idx], spawnPos, Quaternion.identity);
+            GhostPiece ghost = Instantiate(ghostPrefabs[idx], piece.transform.position, Quaternion.identity);
             ghost.target = piece;
             ghost.board = board;
             piece.ghost = ghost;
@@ -208,38 +355,41 @@ public int tIndex = 5;
         return piece;
     }
 
-    // バッグをリセットして全てのミノをランダムに詰め直す
+    /// <summary>
+    /// 7種ミノのランダムバッグを補充する
+    /// </summary>
     private void RefillBag()
     {
-        if (rng == null) rng = new System.Random();
+        if (tetrominoPrefabs == null || tetrominoPrefabs.Length == 0)
+            return;
 
-        int n = (tetrominoPrefabs != null) ? tetrominoPrefabs.Length : 0;
-        if (n == 0) return;
+        List<int> list = new List<int>(tetrominoPrefabs.Length);
+        for (int i = 0; i < tetrominoPrefabs.Length; i++)
+            list.Add(i);
 
-        int[] indices = new int[n];
-        for (int i = 0; i < n; i++) indices[i] = i;
-
-        for (int i = n - 1; i > 0; i--)
+        // Fisher–Yates シャッフル
+        for (int i = list.Count - 1; i > 0; i--)
         {
             int j = rng.Next(i + 1);
-            (indices[i], indices[j]) = (indices[j], indices[i]);
+            int tmp = list[i];
+            list[i] = list[j];
+            list[j] = tmp;
         }
 
-        foreach (var i in indices)
+        foreach (int idx in list)
         {
-            bagQueue.Enqueue(i);
-            previewCache.Add(i);
+            bagQueue.Enqueue(idx);
         }
-
-        QueueChanged?.Invoke();
     }
 
-    // 必要な参照が設定されているかを確認する
+    /// <summary>
+    /// プレハブなどの設定チェック
+    /// </summary>
     private bool ValidateSetup()
     {
         if (board == null)
         {
-            Debug.LogError("Spawner: Board が未割当です。");
+            Debug.LogError("Spawner: board が未設定です。");
             return false;
         }
         if (tetrominoPrefabs == null || tetrominoPrefabs.Length == 0)

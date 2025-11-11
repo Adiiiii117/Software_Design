@@ -11,7 +11,7 @@ public class Tetromino : MonoBehaviour
 
     [Header("Grounded Action Limits")]
     public int groundedMoveAllowance = 14;      // 地面接触時の移動許容回数
-    public int groundedRotateAllowance = 15;    // 地面接触時の回転許容回数 
+    public int groundedRotateAllowance = 15;    // 接地時の回転許容回数 
 
     [Header("Inactivity Lock")]
     public float inactivitySeconds = 0.9f;      // 無操作後にロックするまでの秒数
@@ -40,8 +40,8 @@ public class Tetromino : MonoBehaviour
     private float lastActionTime = -1f;        // 最後の操作時刻
 
     // シーン別挙動用フラグ
-    private bool disableAutoFall = false;      // 自動落下を無効にするか（TSD_N用）
-    private bool allowUpMove = false;          // 上移動を許可するか（TSD_N用）
+    private bool disableAutoFall = false;      // 自動落下を無効にするか
+    private bool allowUpMove = false;          // 上移動を許可するか
 
     // ミノ生成時の初期設定
     private void Awake()
@@ -82,9 +82,13 @@ public class Tetromino : MonoBehaviour
             return;
         }
 
-        // シーン名に TSD_N を含む場合は自動落下を無効化＋上移動を許可（中級モード）
+        // シーン名に応じて自動落下や上移動の可否を切り替える
+        // ・TSD_N …… 中級TSD（自動落下なし＋↑移動あり）
+        // ・REN_E_* … Easy REN（自動落下なし＋↑移動あり）
+        // ・REN_N …… Normal REN（自動落下なし＋↑移動あり）
+        // ・REN_H …… Hard REN（通常落下・↑移動なし）
         string sceneName = SceneManager.GetActiveScene().name;
-        if (sceneName.Contains("TSD_N"))
+        if (sceneName.Contains("TSD_N") || sceneName.Contains("REN_E") || sceneName.Contains("REN_N"))
         {
             disableAutoFall = true;
             allowUpMove = true;
@@ -101,8 +105,6 @@ public class Tetromino : MonoBehaviour
         HandleFalling();
         TryAutoLockIfNeeded();
     }
-
-    
 
     // ミノが地面または他のミノに接触しているかを判定
     private void UpdateGroundedState()
@@ -149,7 +151,7 @@ public class Tetromino : MonoBehaviour
             if (spawner != null && spawner.RequestHold(this)) return;
         }
 
-        // 左移動 (A)
+        // 左移動 (←)
         if (Input.GetKeyDown(KeyCode.LeftArrow))
         {
             if (!grounded || movesWhenGrounded > 0)
@@ -166,7 +168,7 @@ public class Tetromino : MonoBehaviour
             }
         }
 
-        // 右移動 (D)
+        // 右移動 (→)
         if (Input.GetKeyDown(KeyCode.RightArrow))
         {
             if (!grounded || movesWhenGrounded > 0)
@@ -183,7 +185,7 @@ public class Tetromino : MonoBehaviour
             }
         }
 
-        // 上移動 (↑) - TSD_N シーンのみ有効
+        // 上移動 (↑) - 対象シーンのみ有効（TSD_N / REN_E_* / REN_N）
         if (allowUpMove && Input.GetKeyDown(KeyCode.UpArrow))
         {
             if (TryMove(Vector3.up))
@@ -192,9 +194,9 @@ public class Tetromino : MonoBehaviour
             }
         }
 
-        // 回転 (→: 右回転, ←: 左回転)
+        // 回転 (D: 右回転, A: 左回転) ※ここは元のキー設定のまま
         if (Input.GetKeyDown(KeyCode.D)) TryRotateAndRecord(+1);
-        if (Input.GetKeyDown(KeyCode.A))  TryRotateAndRecord(-1);
+        if (Input.GetKeyDown(KeyCode.A)) TryRotateAndRecord(-1);
 
         // ハードドロップ (Space)
         if (Input.GetKeyDown(KeyCode.Space))
@@ -205,7 +207,7 @@ public class Tetromino : MonoBehaviour
 
         // ソフトドロップ (↓)
         if (Input.GetKeyDown(KeyCode.DownArrow)) fastDropping = true;
-        if (Input.GetKeyUp(KeyCode.DownArrow))   fastDropping = false;
+        if (Input.GetKeyUp(KeyCode.DownArrow)) fastDropping = false;
     }
 
     // 回転処理と許容回数管理
@@ -235,7 +237,7 @@ public class Tetromino : MonoBehaviour
     // 自動落下処理
     private void HandleFalling()
     {
-        // TSD_N では自動落下を0にする（↓キー・Spaceは別扱い）
+        // REN_N / REN_E_* / TSD_N では自動落下を0にする（↓キー・Spaceは別扱い）
         float baseSpeed = disableAutoFall ? 0f : normalFallSpeed;
         float speed = fastDropping ? fastDropSpeed : baseSpeed;
 
@@ -380,14 +382,16 @@ public class Tetromino : MonoBehaviour
         // 何ライン消えたかを取得（Board に ClearLinesAndGetCount() がある前提）
         int linesCleared = board.ClearLinesAndGetCount();
 
-        // TSpinDoubleJudge へ通知（存在する場合のみ）
-        var judge = FindObjectOfType<TSpinDoubleJudge>();
-        if (judge != null)
+        // ===== 各種 Judge へ通知 =====
+
+        // T-Spin Double 用
+        var tsdJudge = FindObjectOfType<TSpinDoubleJudge>();
+        if (tsdJudge != null)
         {
-            judge.OnPieceLocked(this, linesCleared);
+            tsdJudge.OnPieceLocked(this, linesCleared);
 
             // クリアでステージが終了しているなら、次のミノは出さない
-            if (judge.IsStageCleared)
+            if (tsdJudge.IsStageCleared)
             {
                 enabled = false;
                 Destroy(gameObject);
@@ -395,7 +399,35 @@ public class Tetromino : MonoBehaviour
             }
         }
 
-        // 通常進行：次のミノを出す
+        // T-Spin Triple 用
+        var tstJudge = FindObjectOfType<TSpinTripleJudge>();
+        if (tstJudge != null)
+        {
+            tstJudge.OnPieceLocked(this, linesCleared);
+
+            if (tstJudge.IsStageCleared)
+            {
+                enabled = false;
+                Destroy(gameObject);
+                return;
+            }
+        }
+
+        // REN 練習用
+        var renJudge = FindObjectOfType<RenJudge>();
+        if (renJudge != null)
+        {
+            renJudge.OnPieceLocked(this, linesCleared);
+
+            if (renJudge.IsStageCleared)
+            {
+                enabled = false;
+                Destroy(gameObject);
+                return;
+            }
+        }
+
+        // ===== 通常進行：次のミノを出す =====
         enabled = false;
         StartCoroutine(SpawnNextFrame());
     }

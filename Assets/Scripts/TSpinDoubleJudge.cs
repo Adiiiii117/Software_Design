@@ -7,8 +7,8 @@ public class TSpinDoubleJudge : MonoBehaviour
     [Tooltip("成功時に表示するUIルート（クリアパネル）")]
     public GameObject clearUIRoot;
 
-    [Tooltip("ステージ一覧シーン名")]
-    public string stageSelectSceneName = "StageSelect";
+    [Tooltip("ステージ一覧シーン名（Technique Select など）")]
+    public string stageSelectSceneName = "TechniqueSelect";
 
     [Tooltip("次のステージのシーン名（なければ空でOK）")]
     public string nextStageSceneName = "";
@@ -19,14 +19,15 @@ public class TSpinDoubleJudge : MonoBehaviour
     /// <summary>ステージがクリア状態かどうか</summary>
     public bool IsStageCleared { get; private set; } = false;
 
-    /// <summary>TSD_E（初級）モードかどうか</summary>
-    private bool isEasyMode = false;
+    /// <summary>Easy系モードかどうか（TSD_E / TSD_B）</summary>
+    private bool isEasyLikeMode = false;
 
     private void Start()
     {
-        // シーン名に "TSD_E" を含んでいたら初級モード
         string sceneName = SceneManager.GetActiveScene().name;
-        isEasyMode = sceneName.Contains("TSD_E");
+
+        // ★ TSD_E, TSD_B はどちらも「Easy系」扱い（失敗で自動リスタート）
+        isEasyLikeMode = sceneName.Contains("TSD_E") || sceneName.Contains("TSD_B");
 
         if (clearUIRoot != null) clearUIRoot.SetActive(false);
     }
@@ -38,13 +39,15 @@ public class TSpinDoubleJudge : MonoBehaviour
     {
         if (IsStageCleared) return;
 
-        // このJudgeはTスピンダブル用なので、T以外は無視（基本Tしか出ない想定）
+        // このJudgeはTスピンダブル用なので、T以外は無視
+        // tetrominoPrefabs が I,J,L,O,S,T,Z なら T は index 5
         if (piece.typeIndex != 5) return;
 
-        if (isEasyMode)
+        if (isEasyLikeMode)
         {
-            // ★ 初級：Tが固定されたら、2列消えていれば成功、
-            //          それ以外は即リスタート（失敗UIは出さない）
+            // ★ Easy系（TSD_E / TSD_B）:
+            //    Tが固定されたら、2列消えていれば成功、
+            //    それ以外は即リスタート（失敗UIは出さない）
             if (linesCleared == 2)
             {
                 HandleStageClear();
@@ -56,7 +59,8 @@ public class TSpinDoubleJudge : MonoBehaviour
         }
         else
         {
-            // ★ Normal / Hard：Tで2列消した場合のみクリア
+            // ★ Normal / Hard:
+            //    Tで2列消した場合のみクリア（失敗してもゲーム続行）
             if (linesCleared == 2)
             {
                 HandleStageClear();
@@ -76,7 +80,7 @@ public class TSpinDoubleJudge : MonoBehaviour
             Time.timeScale = 0f;
     }
 
-    /// <summary>初級モードで失敗したときにシーンを即リスタート。</summary>
+    /// <summary>Easy系モードで失敗したときにシーンを即リスタート。</summary>
     private void ForceRestartScene()
     {
         Time.timeScale = 1f;
@@ -86,7 +90,6 @@ public class TSpinDoubleJudge : MonoBehaviour
 
     // ===== クリアUIのボタン用 =====
 
-    /// <summary>リトライボタン：現在のステージを再読み込み。</summary>
     public void OnRetryButton()
     {
         Time.timeScale = 1f;
@@ -94,7 +97,6 @@ public class TSpinDoubleJudge : MonoBehaviour
         SceneManager.LoadScene(current.buildIndex);
     }
 
-    /// <summary>次のステージへボタン。</summary>
     public void OnNextStageButton()
     {
         if (string.IsNullOrEmpty(nextStageSceneName))
@@ -107,7 +109,6 @@ public class TSpinDoubleJudge : MonoBehaviour
         SceneManager.LoadScene(nextStageSceneName);
     }
 
-    /// <summary>ステージ一覧へボタン。</summary>
     public void OnStageSelectButton()
     {
         if (string.IsNullOrEmpty(stageSelectSceneName))

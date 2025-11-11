@@ -9,6 +9,10 @@ public class Board : MonoBehaviour
     public Transform blockContainer;
     public Vector3 origin = Vector3.zero;
 
+    [Header("Special Blocks")]
+    [Tooltip("このタグが付いているブロックはラインが消えても残し、下にも動かさない（壁などに使用）")]
+    public string fixedBlockTag = "FixedBlock";
+
     private Transform[,] grid;
 
     // ボード初期化（グリッド生成）
@@ -100,12 +104,20 @@ public class Board : MonoBehaviour
     }
 
     // 指定された行を削除する
+    // （fixedBlockTag が付いているブロックは消さず、そのまま残す）
     private void ClearLine(int y)
     {
         for (int x = 0; x < size.x; x++)
         {
             if (grid[x, y] != null)
             {
+                // 固定ブロックなら消さない
+                if (!string.IsNullOrEmpty(fixedBlockTag) &&
+                    grid[x, y].CompareTag(fixedBlockTag))
+                {
+                    continue;
+                }
+
                 Destroy(grid[x, y].gameObject);
                 grid[x, y] = null;
             }
@@ -130,6 +142,7 @@ public class Board : MonoBehaviour
     }
 
     // 指定行より上のすべての行を1段下に移動する
+    // （fixedBlockTag が付いているブロックは動かさない）
     private void ShiftLinesDown(int startY)
     {
         for (int y = startY; y < size.y; y++)
@@ -138,6 +151,13 @@ public class Board : MonoBehaviour
             {
                 if (grid[x, y] != null)
                 {
+                    // 固定ブロックはその場に残す
+                    if (!string.IsNullOrEmpty(fixedBlockTag) &&
+                        grid[x, y].CompareTag(fixedBlockTag))
+                    {
+                        continue;
+                    }
+
                     grid[x, y - 1] = grid[x, y];
                     grid[x, y] = null;
                     grid[x, y - 1].position += Vector3.down;

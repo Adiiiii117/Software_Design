@@ -2,9 +2,9 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// T-Spin Triple (TST) を決めたらステージクリアにする判定。
-/// Tetromino.Lock() から OnPieceLocked が呼ばれる前提。
-/// シーン名に TST_E / TST_N / TST_H を含めて使う想定。
+/// T-Spin Triple (TST) 用のクリア判定。
+/// T固定時に3列消したらクリア。
+/// TST_E / TST_B は失敗で自動リスタート、それ以外は失敗しても続行。
 /// </summary>
 public class TSpinTripleJudge : MonoBehaviour
 {
@@ -12,7 +12,7 @@ public class TSpinTripleJudge : MonoBehaviour
     [Tooltip("成功時に表示するUIルート（クリアパネル）")]
     public GameObject clearUIRoot;
 
-    [Tooltip("ステージ一覧（Technique Selectなど）のシーン名")]
+    [Tooltip("ステージ一覧シーン名")]
     public string stageSelectSceneName = "TechniqueSelect";
 
     [Tooltip("次のステージのシーン名（なければ空でOK）")]
@@ -21,38 +21,32 @@ public class TSpinTripleJudge : MonoBehaviour
     [Tooltip("クリア時に Time.timeScale = 0 にするか")]
     public bool stopTimeOnClear = true;
 
-    /// <summary>ステージがクリア状態かどうか</summary>
     public bool IsStageCleared { get; private set; } = false;
 
-    /// <summary>TST_E（初級）モードかどうか</summary>
-    private bool isEasyMode = false;
+    /// <summary>TST_E / TST_B のような Easy系モードかどうか</summary>
+    private bool isEasyLikeMode = false;
 
     private void Start()
     {
-        // シーン名に "TST_E" を含んでいたら初級モード
         string sceneName = SceneManager.GetActiveScene().name;
-        isEasyMode = sceneName.Contains("TST_E");
+
+        // ★ TST_E, TST_B は Easy系扱い（失敗で自動リスタート）
+        isEasyLikeMode = sceneName.Contains("TST_E") || sceneName.Contains("TST_B");
 
         if (clearUIRoot != null) clearUIRoot.SetActive(false);
     }
 
-    /// <summary>
-    /// Tetromino がロックされたときに Tetromino 側から呼ばれる。
-    /// </summary>
-    /// <param name="piece">ロックされたミノ</param>
-    /// <param name="linesCleared">このロックで消えたライン数</param>
     public void OnPieceLocked(Tetromino piece, int linesCleared)
     {
         if (IsStageCleared) return;
 
-        // このJudgeはTST用なので、T以外は無視（基本Tしか出ない想定）
-        // tetrominoPrefabs が I,J,L,O,S,T,Z なら T は index 5
+        // Tミノ以外は無視
         if (piece.typeIndex != 5) return;
 
-        if (isEasyMode)
+        if (isEasyLikeMode)
         {
-            // ★ 初級：Tが固定されたら、
-            //    3列消えていれば成功、それ以外は即リスタート（失敗UIは出さない）
+            // ★ Easy系（TST_E / TST_B）:
+            //    Tで3列消したらクリア、それ以外は即リスタート
             if (linesCleared == 3)
             {
                 HandleStageClear();
@@ -64,7 +58,8 @@ public class TSpinTripleJudge : MonoBehaviour
         }
         else
         {
-            // ★ Normal / Hard：Tで3列消した場合のみクリア
+            // ★ Normal / Hard:
+            //    Tで3列消したときだけクリア
             if (linesCleared == 3)
             {
                 HandleStageClear();
@@ -72,7 +67,6 @@ public class TSpinTripleJudge : MonoBehaviour
         }
     }
 
-    /// <summary>ステージクリア処理。</summary>
     private void HandleStageClear()
     {
         IsStageCleared = true;
@@ -84,7 +78,6 @@ public class TSpinTripleJudge : MonoBehaviour
             Time.timeScale = 0f;
     }
 
-    /// <summary>初級モードで失敗したときにシーンを即リスタート。</summary>
     private void ForceRestartScene()
     {
         Time.timeScale = 1f;
@@ -92,9 +85,7 @@ public class TSpinTripleJudge : MonoBehaviour
         SceneManager.LoadScene(current.buildIndex);
     }
 
-    // ===== クリアUIのボタン用 =====
-
-    /// <summary>リトライボタン：現在のステージを再読み込み。</summary>
+    // クリアUIボタン用
     public void OnRetryButton()
     {
         Time.timeScale = 1f;
@@ -102,7 +93,6 @@ public class TSpinTripleJudge : MonoBehaviour
         SceneManager.LoadScene(current.buildIndex);
     }
 
-    /// <summary>次のステージへボタン。</summary>
     public void OnNextStageButton()
     {
         if (string.IsNullOrEmpty(nextStageSceneName))
@@ -115,7 +105,6 @@ public class TSpinTripleJudge : MonoBehaviour
         SceneManager.LoadScene(nextStageSceneName);
     }
 
-    /// <summary>ステージ一覧へボタン。</summary>
     public void OnStageSelectButton()
     {
         if (string.IsNullOrEmpty(stageSelectSceneName))
