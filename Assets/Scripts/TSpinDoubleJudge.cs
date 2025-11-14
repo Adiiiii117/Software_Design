@@ -69,9 +69,17 @@ public class TSpinDoubleJudge : MonoBehaviour
     }
 
     /// <summary>ステージクリア処理。</summary>
-    private void HandleStageClear()
+   private void HandleStageClear()
     {
         IsStageCleared = true;
+        
+        var controlUI = FindObjectOfType<GameControlUI>();
+        if (controlUI != null)
+            controlUI.HideAllUI();
+
+        // ★ 追加：タイマー停止
+        if (GameTimer.Instance != null)
+            GameTimer.Instance.StopTimer();
 
         if (clearUIRoot != null)
             clearUIRoot.SetActive(true);
