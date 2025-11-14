@@ -16,13 +16,20 @@ public class Tetromino : MonoBehaviour
     [Header("Inactivity Lock")]
     public float inactivitySeconds = 0.9f;      // 無操作ロック秒
 
+    [Header("Auto Shift (横長押し)")]
+    [Tooltip("DAS: キー押下から連続移動が始まるまでの遅延秒数")]
+    public float dasDelay = 0.15f;               // 例: 0.15
+    [Tooltip("ARR: 連続移動の間隔秒数（小さいほど速い）")]
+    public float arrInterval = 0.03f;            // 例: 0.03
+
     [Header("References")]
     public Board board;
     public Transform pivotOverride;              // 回転の中心（任意）
     public GhostPiece ghost;
 
     [Header("Meta")]
-    public int typeIndex;                        // ミノ種類 (Spawnerの並び: I(0),J(1),L(2),O(3),S(4),T(5),Z(6))
+    // Spawnerの並び: I(0),J(1),L(2),O(3),S(4),T(5),Z(6) を想定
+    public int typeIndex;                        // ミノ種類
     public bool spawnedFromHold;
 
     public Transform[] Cells { get; private set; } // ブロック4個
@@ -50,6 +57,12 @@ public class Tetromino : MonoBehaviour
     // 0:Up, 1:Right, 2:Down, 3:Left
     private int rotationIndex = 0;
     public bool lastMoveWasRotation { get; private set; } = false;
+
+    // オートシフト（横長押し）
+    // -1:左, 0:なし, +1:右（最後に押した方向が勝つ）
+    private int horizontalDir = 0;
+    private float dasTimer = 0f;
+    private float arrTimer = 0f;
 
     private void Awake()
     {
@@ -111,7 +124,7 @@ public class Tetromino : MonoBehaviour
             allowUpMove = false;
             hardDropOnlyLock = false;
         }
-        // それ以外（Hard等）はデフォルト（落下あり・↑移動なし）
+        // Hard等はデフォルト（落下あり・↑移動なし）
     }
 
     private void Update()
@@ -120,6 +133,7 @@ public class Tetromino : MonoBehaviour
 
         UpdateGroundedState();
         HandleInput();
+        HandleHorizontalAutoShift(); // ★ 長押し横移動
         HandleFalling();
         TryAutoLockIfNeeded();
     }
@@ -167,37 +181,49 @@ public class Tetromino : MonoBehaviour
             if (spawner != null && spawner.RequestHold(this)) return;
         }
 
-        // Move Left
+        // --- 横移動：押下/離し（初回1マス + オートシフト準備） ---
+        // 左押下
         if (Input.GetKeyDown(KeyCode.LeftArrow))
         {
-            if (!grounded || movesWhenGrounded > 0 || hardDropOnlyLock)
-            {
-                if (TryMove(Vector3.left))
-                {
-                    if (grounded && !hardDropOnlyLock)
-                    {
-                        movesWhenGrounded--;
-                        ArmInactivityTimerNow();
-                        TryAutoLockIfNeeded();
-                    }
-                }
-            }
+            horizontalDir = -1;     // 最後に押した方向が勝つ
+            dasTimer = 0f;
+            arrTimer = 0f;
+            TryMoveHorizontalOnce(-1); // 初回1マス
         }
-
-        // Move Right
+        // 右押下
         if (Input.GetKeyDown(KeyCode.RightArrow))
         {
-            if (!grounded || movesWhenGrounded > 0 || hardDropOnlyLock)
+            horizontalDir = +1;
+            dasTimer = 0f;
+            arrTimer = 0f;
+            TryMoveHorizontalOnce(+1);
+        }
+        // 左離し
+        if (Input.GetKeyUp(KeyCode.LeftArrow))
+        {
+            if (Input.GetKey(KeyCode.RightArrow))
             {
-                if (TryMove(Vector3.right))
-                {
-                    if (grounded && !hardDropOnlyLock)
-                    {
-                        movesWhenGrounded--;
-                        ArmInactivityTimerNow();
-                        TryAutoLockIfNeeded();
-                    }
-                }
+                horizontalDir = +1;
+                dasTimer = 0f;
+                arrTimer = 0f;
+            }
+            else
+            {
+                horizontalDir = 0;
+            }
+        }
+        // 右離し
+        if (Input.GetKeyUp(KeyCode.RightArrow))
+        {
+            if (Input.GetKey(KeyCode.LeftArrow))
+            {
+                horizontalDir = -1;
+                dasTimer = 0f;
+                arrTimer = 0f;
+            }
+            else
+            {
+                horizontalDir = 0;
             }
         }
 
@@ -224,6 +250,44 @@ public class Tetromino : MonoBehaviour
         // Soft Drop (↓)
         if (Input.GetKeyDown(KeyCode.DownArrow)) fastDropping = true;
         if (Input.GetKeyUp(KeyCode.DownArrow)) fastDropping = false;
+    }
+
+    // 横長押しの自動移動（DAS/ARR）
+    private void HandleHorizontalAutoShift()
+    {
+        if (horizontalDir == 0) return;
+
+        // キー実際状態チェック（セーフガード）
+        bool leftHeld = Input.GetKey(KeyCode.LeftArrow);
+        bool rightHeld = Input.GetKey(KeyCode.RightArrow);
+        if (horizontalDir == -1 && !leftHeld)
+        {
+            horizontalDir = rightHeld ? +1 : 0; dasTimer = 0f; arrTimer = 0f;
+        }
+        if (horizontalDir == +1 && !rightHeld)
+        {
+            horizontalDir = leftHeld ? -1 : 0; dasTimer = 0f; arrTimer = 0f;
+        }
+        if (horizontalDir == 0) return;
+
+        // DAS 経過前は待機
+        if (dasTimer < dasDelay)
+        {
+            dasTimer += Time.deltaTime;
+            return;
+        }
+
+        // ARR 間隔で移動を刻む
+        arrTimer += Time.deltaTime;
+        while (arrTimer >= arrInterval)
+        {
+            arrTimer -= arrInterval;
+            if (!TryMoveHorizontalOnce(horizontalDir))
+            {
+                // ぶつかったら停止（キーの離し/向き変更で再開）
+                break;
+            }
+        }
     }
 
     private void TryRotateAndRecord(int dir)
@@ -266,7 +330,7 @@ public class Tetromino : MonoBehaviour
 
             if (hardDropOnlyLock)
             {
-                // Normalでは自動ロックしない（SpaceでのみLock）
+                // Normalでは自動ロックしない（SpaceのみLock）
                 break;
             }
 
@@ -334,6 +398,28 @@ public class Tetromino : MonoBehaviour
 
         transform.position += delta;
         return true;
+    }
+
+    // 横方向に1マス動かす（長押し/単発どちらからも使用）
+    private bool TryMoveHorizontalOnce(int dir) // dir: -1 左, +1 右
+    {
+        Vector3 delta = (dir < 0) ? Vector3.left : Vector3.right;
+
+        if (!grounded || movesWhenGrounded > 0 || hardDropOnlyLock)
+        {
+            if (TryMove(delta))
+            {
+                if (grounded && !hardDropOnlyLock)
+                {
+                    // 接地時は許容量を消費（Normalでは消費しない）
+                    movesWhenGrounded--;
+                    ArmInactivityTimerNow();
+                    TryAutoLockIfNeeded();
+                }
+                return true;
+            }
+        }
+        return false;
     }
 
     // ===== SRS回転実装 =====
@@ -452,7 +538,7 @@ public class Tetromino : MonoBehaviour
         if (locked) return;
         locked = true;
 
-        // クリアUI表示時の不要ゴースト削除
+        // ゴースト削除
         if (ghost != null)
         {
             Destroy(ghost.gameObject);
