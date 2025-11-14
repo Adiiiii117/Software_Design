@@ -58,4 +58,11 @@ public class GameControlUI : MonoBehaviour
         // 再生中 → 「||」、一時停止中 → 「▶」
         pauseButtonImage.sprite = isPaused ? playSprite : pauseSprite;
     }
+
+    public void HideAllUI()
+    {
+        gameObject.SetActive(false);
+    }
 }
+
+

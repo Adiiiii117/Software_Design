@@ -106,6 +106,13 @@ public class RenJudge : MonoBehaviour
     private void HandleStageClear()
     {
         IsStageCleared = true;
+        var controlUI = FindObjectOfType<GameControlUI>();
+        if (controlUI != null)
+            controlUI.HideAllUI();
+
+        // ★ 追加：タイマー停止
+        if (GameTimer.Instance != null)
+            GameTimer.Instance.StopTimer();
 
         if (clearUIRoot != null)
             clearUIRoot.SetActive(true);
@@ -121,78 +128,37 @@ public class RenJudge : MonoBehaviour
     {
         if (resultLabel == null) return;
 
-        string msg;
+        // クリアタイム（タイマー未配置なら 0）
+        float clearTime = (GameTimer.Instance != null) ? GameTimer.Instance.GetClearTime() : 0f;
 
+        // 既存ロジックをベースに「ランク or クリア文言」を作る
+        string head;
         if (isEasyMode)
         {
-            // 目標レン数との関係でメッセージを変える
-            if (maxRen == targetRenForEasy)
+            if (maxRen >= targetRenForEasy)
             {
-                msg = $"CLEAR! {maxRen} REN 達成！";
-            }
-            else if (maxRen > targetRenForEasy)
-            {
-                msg = $"すごい！ {maxRen} REN！(必要: {targetRenForEasy})";
+                // 目標達成
+                head = $"CLEAR! {targetRenForEasy} REN 達成！";
             }
             else
             {
-                msg = $"{maxRen} REN（あと {targetRenForEasy - maxRen} でクリア）";
+                // 未達（通常ここは表示されない想定だが安全に）
+                int remain = Mathf.Max(0, targetRenForEasy - maxRen);
+                head = $"{maxRen} REN（あと {remain} でクリア）";
             }
         }
         else
         {
-            // Normal / Hard 共通のランク演出
-            if (maxRen < 3)
-            {
-                msg = $"{maxRen} REN";
-            }
-            else if (maxRen == 3)
-            {
-                msg = $"Nice! {maxRen} REN!!";
-            }
-            else if (maxRen == 4)
-            {
-                msg = $"Great! {maxRen} REN!!";
-            }
-            else
-            {
-                msg = $"Excellent! {maxRen} REN!!!";
-            }
+            // Normal / Hard のランク表現（従来表示を踏襲）
+            if (maxRen < 3)       head = $"{maxRen} REN";
+            else if (maxRen == 3) head = $"Nice! {maxRen} REN!!";
+            else if (maxRen == 5) head = $"Great! {maxRen} REN!!";
+            else                  head = $"Excellent! {maxRen} REN!!!";
         }
+
+        // ★ ここからが追加ポイント：必ず MAX REN と TIME を下に出す
+        string msg = $"{head}\nMAX REN: {maxRen}\nTIME: {clearTime:F2}s";
 
         resultLabel.text = msg;
-    }
-
-    // ===== クリアUIのボタン用 =====
-
-    public void OnRetryButton()
-    {
-        Time.timeScale = 1f;
-        var current = SceneManager.GetActiveScene();
-        SceneManager.LoadScene(current.buildIndex);
-    }
-
-    public void OnNextStageButton()
-    {
-        if (string.IsNullOrEmpty(nextStageSceneName))
-        {
-            Debug.LogWarning("RenJudge: nextStageSceneName が設定されていません。");
-            return;
-        }
-
-        Time.timeScale = 1f;
-        SceneManager.LoadScene(nextStageSceneName);
-    }
-
-    public void OnStageSelectButton()
-    {
-        if (string.IsNullOrEmpty(stageSelectSceneName))
-        {
-            Debug.LogWarning("RenJudge: stageSelectSceneName が設定されていません。");
-            return;
-        }
-
-        Time.timeScale = 1f;
-        SceneManager.LoadScene(stageSelectSceneName);
     }
 }
