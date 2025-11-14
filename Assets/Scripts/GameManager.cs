@@ -7,9 +7,9 @@ public class GameManager : MonoBehaviour
     public Board board;
     public Spawner spawner;
 
-    [Header("Scene Transition (共通)")]
-    [Tooltip("フェード演出を入れたい場合だけ設定")]
-    public FadeCanvas fadeCanvas;   // なければ空でOK
+    [Header("Scene Transition")]
+    [Tooltip("引数なし版で使うデフォルトの遷移先シーン名")]
+    public string defaultSceneName;
 
     // フレームレートなど、ゲーム全体の初期設定を行う
     private void Awake()
@@ -20,52 +20,38 @@ public class GameManager : MonoBehaviour
     // シーン開始時に参照の最終チェックと依存関係の補完を行う
     private void Start()
     {
-        // ゲームプレイ用シーンに GameManager を置いた場合だけ有効にする
+        // ゲームプレイ用シーンでのみ有効にしたい処理
         if (spawner != null && board != null && spawner.board == null)
         {
             spawner.board = board;
         }
     }
 
-    // ボタンの OnClick から直接呼ぶ用。
-    // Inspector の OnClick で文字列引数にシーン名を渡す。
- 
+   
+    // Inspector の OnClick で「引数なし」のときに使う。
+    // defaultSceneName に設定したシーンへ移動する。
+    public void LoadDefaultScene()
+    {
+        if (string.IsNullOrEmpty(defaultSceneName))
+        {
+            Debug.LogWarning("[GameManager] defaultSceneName が設定されていません。Inspector で入力してください。");
+            return;
+        }
+
+        SceneManager.LoadScene(defaultSceneName);
+    }
+
+
+    // Button の OnClick から、文字列引数でシーン名を指定して呼ぶ用。
+    // ボタンごとに違うシーンに飛ばしたいときはこちらを使う。
     public void LoadSceneByName(string sceneName)
     {
         if (string.IsNullOrEmpty(sceneName))
         {
-            Debug.LogWarning("[GameManager] シーン名が空です。OnClick の引数を設定してください。");
+            Debug.LogWarning("[GameManager] 引数の sceneName が空です。OnClick の引数にシーン名を入れてください。");
             return;
         }
 
-        LoadSceneInternal(sceneName);
-    }
-
-
-    // Build Settings の「次のシーン」へ進みたいとき用（必要なら使う）
-    public void LoadNextSceneByBuildIndex()
-    {
-        int current = SceneManager.GetActiveScene().buildIndex;
-        string sceneName = SceneManager.GetSceneByBuildIndex(current + 1).name;
-        LoadSceneInternal(sceneName);
-    }
-
-    
-    //実際のロード処理（フェード有り／無しを共通化）
-    private void LoadSceneInternal(string sceneName)
-    {
-        if (fadeCanvas != null)
-        {
-            // フェード演出を使う場合
-            fadeCanvas.FadeOut(() =>
-            {
-                SceneManager.LoadScene(sceneName);
-            });
-        }
-        else
-        {
-            // フェードなしで即ロード
-            SceneManager.LoadScene(sceneName);
-        }
+        SceneManager.LoadScene(sceneName);
     }
 }
