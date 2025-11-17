@@ -244,7 +244,7 @@ public class Tetromino : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.A)) TryRotateAndRecord(-1);
 
         // Hard Drop (Space)
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(KeyCode.S))
         {
             while (TryMove(Vector3.down)) { }
             Lock();
