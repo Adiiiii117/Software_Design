@@ -129,6 +129,9 @@ public class Tetromino : MonoBehaviour
 
     private void Update()
     {
+        // 🔴 一時停止中はミノの処理を完全に止める（入力・落下・ロックすべてストップ）
+        if (GameControlUI.IsPaused) return;
+
         if (locked) return;
 
         UpdateGroundedState();
@@ -240,7 +243,7 @@ public class Tetromino : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.D)) TryRotateAndRecord(+1);
         if (Input.GetKeyDown(KeyCode.A)) TryRotateAndRecord(-1);
 
-        // Hard Drop (Space) → ONLY lock in "hardDropOnlyLock" mode
+        // Hard Drop (Space)
         if (Input.GetKeyDown(KeyCode.Space))
         {
             while (TryMove(Vector3.down)) { }
@@ -477,22 +480,47 @@ public class Tetromino : MonoBehaviour
         {
             switch (from)
             {
-                case 0: return new[] { V(0,0), V(-1,0), V(-1,+1), V(0,-2), V(-1,-2) }; // Up->Right
-                case 1: return new[] { V(0,0), V(+1,0), V(+1,-1), V(0,+2), V(+1,+2) }; // Right->Down
-                case 2: return new[] { V(0,0), V(+1,0), V(+1,+1), V(0,-2), V(+1,-2) }; // Down->Left
-                case 3: return new[] { V(0,0), V(-1,0), V(-1,-1), V(0,+2), V(-1,+2) }; // Left->Up
+                case 0: // Up -> Right (0->1)
+                    return new[] {
+                        V(0, 0), V(-1, 0), V(-1, +1), V(0, -2), V(-1, -2)
+                    };
+                case 1: // Right -> Down (1->2)
+                    return new[] {
+                        V(0, 0), V(+1, 0), V(+1, -1), V(0, +2), V(+1, +2)
+                    };
+                case 2: // Down -> Left (2->3)
+                    return new[] {
+                        V(0, 0), V(+1, 0), V(+1, +1), V(0, -2), V(+1, -2)
+                    };
+                case 3: // Left -> Up (3->0)
+                    return new[] {
+                        V(0, 0), V(-1, 0), V(-1, -1), V(0, +2), V(-1, +2)
+                    };
             }
         }
-        else // CCW
+        else // 反時計回り CCW
         {
             switch (from)
             {
-                case 0: return new[] { V(0,0), V(+1,0), V(+1,+1), V(0,-2), V(+1,-2) }; // Up->Left
-                case 3: return new[] { V(0,0), V(+1,0), V(+1,-1), V(0,+2), V(+1,+2) }; // Left->Down
-                case 2: return new[] { V(0,0), V(-1,0), V(-1,+1), V(0,-2), V(-1,-2) }; // Down->Right
-                case 1: return new[] { V(0,0), V(-1,0), V(-1,-1), V(0,+2), V(-1,+2) }; // Right->Up
+                case 0: // 0 -> 3 (Up -> Left)    = 0->L
+                    return new[] {
+                        V(0, 0), V(+1, 0), V(+1, +1), V(0, -2), V(+1, -2)
+                    };
+                case 3: // 3 -> 2 (Left -> Down)  = L->2
+                    return new[] {
+                        V(0, 0), V(-1, 0), V(-1, -1), V(0, +2), V(-1, +2)
+                    };
+                case 2: // 2 -> 1 (Down -> Right) = 2->R
+                    return new[] {
+                        V(0, 0), V(+1, 0), V(+1, +1), V(0, -2), V(+1, -2)
+                    };
+                case 1: // 1 -> 0 (Right -> Up)   = R->0
+                    return new[] {
+                        V(0, 0), V(+1, 0), V(+1, -1), V(0, +2), V(+1, +2)
+                    };
             }
         }
+
         return new[] { V(0, 0) };
     }
 
