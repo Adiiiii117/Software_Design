@@ -537,7 +537,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1444963815}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: TSpinDoubleJudge, Assembly-CSharp
         m_MethodName: OnNextStageButton
         m_Mode: 1
@@ -1861,7 +1861,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1444963815}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: TSpinDoubleJudge, Assembly-CSharp
         m_MethodName: OnRetryButton
         m_Mode: 1
@@ -1994,7 +1994,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1444963815}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: TSpinDoubleJudge, Assembly-CSharp
         m_MethodName: OnStageSelectButton
         m_Mode: 1
@@ -2442,8 +2442,8 @@ GameObject:
   - component: {fileID: 1444963818}
   - component: {fileID: 1444963817}
   - component: {fileID: 1444963816}
-  - component: {fileID: 1444963815}
   - component: {fileID: 1444963814}
+  - component: {fileID: 1444963819}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -2466,22 +2466,6 @@ MonoBehaviour:
   escMenuRoot: {fileID: 1524224667}
   techniqueSelectSceneName: TechniqueSelect
   titleSceneName: Title
---- !u!114 &1444963815
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1444963813}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d00615511c459439bbd9d163d3bd4f09, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  clearUIRoot: {fileID: 593823201}
-  stageSelectSceneName: StageSelect
-  nextStageSceneName: TSD_N1
-  stopTimeOnClear: 1
 --- !u!114 &1444963816
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2496,6 +2480,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   board: {fileID: 1884101441}
   spawner: {fileID: 753461673}
+  defaultSceneName: 
 --- !u!114 &1444963817
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2528,6 +2513,22 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1444963819
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1444963813}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6df82d489c75b45ec9d134b77388fbd3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  clearUIRoot: {fileID: 593823201}
+  stageSelectSceneName: TST_StageSelect
+  nextStageSceneName: TST_E6
+  stopTimeOnClear: 1
 --- !u!1 &1524224667
 GameObject:
   m_ObjectHideFlags: 0
