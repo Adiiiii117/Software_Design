@@ -5,7 +5,7 @@ public class EscMenuController : MonoBehaviour
 {
     [Header("UI Root")]
     [Tooltip("ESCメニューのパネル（Canvas配下のPanel）")]
-    public GameObject escMenuRoot;
+    public GameObject escMenuPanel;
 
     [Header("Scene Names")]
     [Tooltip("テクニック選択画面のシーン名")]
@@ -18,8 +18,8 @@ public class EscMenuController : MonoBehaviour
 
     private void Start()
     {
-        if (escMenuRoot != null)
-            escMenuRoot.SetActive(false);
+        if (escMenuPanel != null)
+            escMenuPanel.SetActive(false);
     }
 
     private void Update()
@@ -38,8 +38,8 @@ public class EscMenuController : MonoBehaviour
     {
         isOpen = !isOpen;
 
-        if (escMenuRoot != null)
-            escMenuRoot.SetActive(isOpen);
+        if (escMenuPanel != null)
+            escMenuPanel.SetActive(isOpen);
 
         Time.timeScale = isOpen ? 0f : 1f;
     }
