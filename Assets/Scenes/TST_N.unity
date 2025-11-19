@@ -1089,7 +1089,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.392}
+  m_Color: {r: 0, g: 0, b: 0, a: 0.6666667}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1252,7 +1252,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.392}
+  m_Color: {r: 0, g: 0, b: 0, a: 0.6666667}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1310,6 +1310,7 @@ MonoBehaviour:
   visibleSize: {x: 10, y: 20}
   blockContainer: {fileID: 0}
   origin: {x: 0, y: 0, z: 0}
+  fixedBlockTag: FixedBlock
 --- !u!4 &1066740346
 Transform:
   m_ObjectHideFlags: 0
@@ -2209,6 +2210,41 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1583703422}
   m_CullTransparentMesh: 1
+--- !u!1 &1584076194
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1584076195}
+  m_Layer: 5
+  m_Name: ClearCharacterRoot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1584076195
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1584076194}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1817494293}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1708928140
 GameObject:
   m_ObjectHideFlags: 0
@@ -2444,6 +2480,7 @@ RectTransform:
   - {fileID: 1026675137}
   - {fileID: 1789870677}
   - {fileID: 649088840}
+  - {fileID: 1584076195}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -2581,6 +2618,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   board: {fileID: 1066740345}
   spawner: {fileID: 1840983591}
+  defaultSceneName: 
 --- !u!114 &1873188826
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2597,6 +2635,7 @@ MonoBehaviour:
   visibleSize: {x: 10, y: 20}
   blockContainer: {fileID: 0}
   origin: {x: 0, y: 0, z: 0}
+  fixedBlockTag: FixedBlock
 --- !u!4 &1873188827
 Transform:
   m_ObjectHideFlags: 0

@@ -1,101 +1,184 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
-/// <summary>
-/// T-Spin Triple (TST) 用のクリア判定。
-/// T固定時に3列消したらクリア。
-/// TST_E / TST_B は失敗で自動リスタート、それ以外は失敗しても続行。
-/// </summary>
 public class TSpinTripleJudge : MonoBehaviour
 {
     [Header("UI / Scene Settings")]
-    [Tooltip("成功時に表示するUIルート（クリアパネル）")]
     public GameObject clearUIRoot;
-
-    [Tooltip("ステージ一覧シーン名")]
     public string stageSelectSceneName = "TechniqueSelect";
-
-    [Tooltip("次のステージのシーン名（なければ空でOK）")]
     public string nextStageSceneName = "";
-
-    [Tooltip("クリア時に Time.timeScale = 0 にするか")]
     public bool stopTimeOnClear = true;
+
+    [Header("Clear Animation")]
+    public ClearFaridUI clearFaridUI;
+
+    [Header("Clear Texts")]
+    public Text clearMessageText;
+    public Text timeText;
 
     public bool IsStageCleared { get; private set; } = false;
 
-    /// <summary>TST_E / TST_B のような Easy系モードかどうか</summary>
-    private bool isEasyLikeMode = false;
+    bool isEasyLikeMode = false;
 
-    private void Start()
+    void Start()
     {
         string sceneName = SceneManager.GetActiveScene().name;
 
-        // ★ TST_E, TST_B は Easy系扱い（失敗で自動リスタート）
+        // Easy 系モードかどうか
         isEasyLikeMode = sceneName.Contains("TST_E") || sceneName.Contains("TST_B");
 
-        if (clearUIRoot != null) clearUIRoot.SetActive(false);
+        if (clearUIRoot != null)
+            clearUIRoot.SetActive(false);
     }
 
     public void OnPieceLocked(Tetromino piece, int linesCleared)
     {
         if (IsStageCleared) return;
 
-        // Tミノ以外は無視
         if (piece.typeIndex != 5) return;
 
         if (isEasyLikeMode)
         {
-            // ★ Easy系（TST_E / TST_B）:
-            //    Tで3列消したらクリア、それ以外は即リスタート
             if (linesCleared == 3)
             {
+                Debug.Log("[TST] SUCCESS (Easy): 3 lines cleared -> HandleStageClear()");
+                SoundManager.Instance?.PlaySE(SeType.TSpinSuccess);
+                SoundManager.Instance?.PlaySE(SeType.StageClear);
                 HandleStageClear();
             }
             else
             {
+                Debug.Log($"[TST] FAIL (Easy): linesCleared={linesCleared}, time={GetClearTimeSeconds():F2} sec -> ForceRestartScene()");
+                SoundManager.Instance?.PlaySE(SeType.StageFail);
                 ForceRestartScene();
             }
         }
         else
         {
-            // ★ Normal / Hard:
-            //    Tで3列消したときだけクリア
             if (linesCleared == 3)
             {
+                SoundManager.Instance?.PlaySE(SeType.TSpinSuccess);
+                SoundManager.Instance?.PlaySE(SeType.StageClear);
                 HandleStageClear();
             }
         }
     }
 
-    private void HandleStageClear()
+    void HandleStageClear()
     {
+        Debug.Log("[TST] HandleStageClear START");
+
         IsStageCleared = true;
 
         var controlUI = FindObjectOfType<GameControlUI>();
         if (controlUI != null)
             controlUI.HideAllUI();
 
-        // ★ 追加：タイマー停止
         if (GameTimer.Instance != null)
             GameTimer.Instance.StopTimer();
 
-        if (clearUIRoot != null)
-            clearUIRoot.SetActive(true);
+        float clearTime = GetClearTimeSeconds();
+        int spriteIndex = GetSpriteIndexByTime(clearTime, isEasyLikeMode);
+
+        UpdateClearTexts(clearTime, spriteIndex);
+
+        if (clearFaridUI == null)
+        {
+            if (clearUIRoot != null)
+                clearUIRoot.SetActive(true);
+
+            if (stopTimeOnClear)
+                Time.timeScale = 0f;
+
+            Debug.Log("[TST] HandleStageClear: FaridUI=null -> panel only");
+            return;
+        }
+
+        Debug.Log($"[TST] HandleStageClear: time={clearTime:F2}, easy={isEasyLikeMode}, spriteIndex={spriteIndex}");
+
+        clearFaridUI.SetImageByIndex(spriteIndex);
+        clearFaridUI.Play();
 
         if (stopTimeOnClear)
             Time.timeScale = 0f;
+
+        Debug.Log("[TST] HandleStageClear END");
     }
 
-    private void ForceRestartScene()
+    float GetClearTimeSeconds()
+    {
+        if (GameTimer.Instance == null)
+            return 0f;
+
+        return GameTimer.Instance.GetClearTime();
+    }
+
+    int GetSpriteIndexByTime(float seconds, bool easyMode)
+    {
+        if (easyMode)
+        {
+            if (seconds >= 60f) return 0;
+            if (seconds > 30f)  return 1;
+            if (seconds > 20f)  return 2;
+            if (seconds > 10f)  return 3;
+            return 4;
+        }
+        else
+        {
+            if (seconds >= 180f) return 0;
+            if (seconds > 120f)  return 1;
+            if (seconds > 60f)   return 2;
+            if (seconds > 30f)   return 3;
+            return 4;
+        }
+    }
+
+    void UpdateClearTexts(float clearTime, int spriteIndex)
+    {
+        if (timeText != null)
+            timeText.text = $"You took {clearTime:F2} seconds";
+
+        if (clearMessageText != null)
+            clearMessageText.text = GetTimeCommentByIndex(spriteIndex);
+    }
+
+    string GetTimeCommentByIndex(int index)
+    {
+        switch (index)
+        {
+            case 0:
+                return "..... Well, unfortunately the reality is cruel";
+            case 1:
+                return "sigh... You better try hard...";
+            case 2:
+                return "Not bad, but you could more better";
+            case 3:
+                return "Wow, you pretty good at T-Spin!";
+            default:
+                return "You are God Tetris Player";
+        }
+    }
+
+    void ForceRestartScene()
     {
         Time.timeScale = 1f;
         Scene current = SceneManager.GetActiveScene();
         SceneManager.LoadScene(current.buildIndex);
     }
 
-    // クリアUIボタン用
     public void OnRetryButton()
     {
+        SoundManager.Instance?.PlaySE(SeType.ButtonClick);
+
+        if (clearUIRoot != null)
+            clearUIRoot.SetActive(false);
+        if (clearFaridUI != null)
+            clearFaridUI.gameObject.SetActive(false);
+
+        if (GameTimer.Instance != null)
+            GameTimer.Instance.ResetTimer();
+
         Time.timeScale = 1f;
         Scene current = SceneManager.GetActiveScene();
         SceneManager.LoadScene(current.buildIndex);
@@ -109,6 +192,8 @@ public class TSpinTripleJudge : MonoBehaviour
             return;
         }
 
+        SoundManager.Instance?.PlaySE(SeType.ButtonClick);
+
         Time.timeScale = 1f;
         SceneManager.LoadScene(nextStageSceneName);
     }
@@ -120,6 +205,8 @@ public class TSpinTripleJudge : MonoBehaviour
             Debug.LogWarning("TSpinTripleJudge: stageSelectSceneName が設定されていません。");
             return;
         }
+
+        SoundManager.Instance?.PlaySE(SeType.ButtonClick);
 
         Time.timeScale = 1f;
         SceneManager.LoadScene(stageSelectSceneName);

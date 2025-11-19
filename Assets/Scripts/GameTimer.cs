@@ -13,13 +13,17 @@ public class GameTimer : MonoBehaviour
 
     private void Awake()
     {
-        // シングルトン化（他スクリプトから参照できるように）
+        // シングルトン化
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
             return;
         }
+
         Instance = this;
+
+        // ★ ルートの GameObject につけた状態でこれを呼ぶ
+        DontDestroyOnLoad(gameObject);
     }
 
     private void Update()
@@ -39,6 +43,18 @@ public class GameTimer : MonoBehaviour
     public void StopTimer()
     {
         isRunning = false;
+    }
+
+    public void StartTimer()
+    {
+        isRunning = true;
+    }
+
+    public void ResetTimer()
+    {
+        elapsedTime = 0f;
+        isRunning = true;
+        UpdateLabel();
     }
 
     public float GetClearTime()

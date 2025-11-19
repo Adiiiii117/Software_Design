@@ -181,7 +181,12 @@ public class Tetromino : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.C) || Input.GetKeyDown(KeyCode.LeftShift))
         {
             var spawner = FindObjectOfType<Spawner>();
-            if (spawner != null && spawner.RequestHold(this)) return;
+            if (spawner != null && spawner.RequestHold(this))
+            {
+                // ★ 追加：ホールド成功SE
+                SoundManager.Instance?.PlaySE(SeType.Hold);
+                return;
+            }
         }
 
         // --- 横移動：押下/離し（初回1マス + オートシフト準備） ---
@@ -191,7 +196,10 @@ public class Tetromino : MonoBehaviour
             horizontalDir = -1;     // 最後に押した方向が勝つ
             dasTimer = 0f;
             arrTimer = 0f;
-            TryMoveHorizontalOnce(-1); // 初回1マス
+            if (TryMoveHorizontalOnce(-1))       // ★ ここで移動に成功したらSE
+            {
+                SoundManager.Instance?.PlaySE(SeType.Move);
+            }
         }
         // 右押下
         if (Input.GetKeyDown(KeyCode.RightArrow))
@@ -199,7 +207,10 @@ public class Tetromino : MonoBehaviour
             horizontalDir = +1;
             dasTimer = 0f;
             arrTimer = 0f;
-            TryMoveHorizontalOnce(+1);
+            if (TryMoveHorizontalOnce(+1))
+            {
+                SoundManager.Instance?.PlaySE(SeType.Move);
+            }
         }
         // 左離し
         if (Input.GetKeyUp(KeyCode.LeftArrow))
@@ -235,24 +246,46 @@ public class Tetromino : MonoBehaviour
         {
             if (TryMove(Vector3.up))
             {
+                SoundManager.Instance?.PlaySE(SeType.Move);   // ★ 上移動も同じSE
                 if (!hardDropOnlyLock) ArmInactivityTimerNow();
             }
         }
 
         // Rotate CW / CCW (D / A)
-        if (Input.GetKeyDown(KeyCode.D)) TryRotateAndRecord(+1);
-        if (Input.GetKeyDown(KeyCode.A)) TryRotateAndRecord(-1);
+        if (Input.GetKeyDown(KeyCode.D))
+        {
+            if (TryRotateAndRecordWithSE(+1)) { }
+        }
+        if (Input.GetKeyDown(KeyCode.A))
+        {
+            if (TryRotateAndRecordWithSE(-1)) { }
+        }
 
-        // Hard Drop (Space)
+        // Hard Drop (S)
         if (Input.GetKeyDown(KeyCode.S))
         {
             while (TryMove(Vector3.down)) { }
+            // ★ 追加：ハードドロップSE
+            SoundManager.Instance?.PlaySE(SeType.HardDrop);
             Lock();
         }
 
         // Soft Drop (↓)
-        if (Input.GetKeyDown(KeyCode.DownArrow)) fastDropping = true;
-        if (Input.GetKeyUp(KeyCode.DownArrow)) fastDropping = false;
+        if (Input.GetKeyDown(KeyCode.DownArrow))
+        {
+            fastDropping = true;
+
+            // ▼ 追加：下に1マス動けるなら Move SE
+            if (TryMove(Vector3.down))
+            {
+                SoundManager.Instance?.PlaySE(SeType.Move);
+            }
+        }
+
+        if (Input.GetKeyUp(KeyCode.DownArrow))
+        {
+            fastDropping = false;
+        }
     }
 
     // 横長押しの自動移動（DAS/ARR）
@@ -290,15 +323,27 @@ public class Tetromino : MonoBehaviour
                 // ぶつかったら停止（キーの離し/向き変更で再開）
                 break;
             }
+            else
+            {
+                // ★ 長押し移動も成功した分だけSE
+                SoundManager.Instance?.PlaySE(SeType.Move);
+            }
         }
     }
 
-    private void TryRotateAndRecord(int dir)
+    // 回転にSEを含めたラッパー
+    private bool TryRotateAndRecordWithSE(int dir)
     {
+        bool rotated = false;
+
         if (!grounded || rotatesLeftWhenGrounded > 0 || hardDropOnlyLock)
         {
             if (RotateSRS(dir))
             {
+                rotated = true;
+                // ★ 回転成功SE
+                SoundManager.Instance?.PlaySE(SeType.Rotate);
+
                 if (grounded && !hardDropOnlyLock)
                 {
                     rotatesLeftWhenGrounded--;
@@ -307,6 +352,8 @@ public class Tetromino : MonoBehaviour
                 }
             }
         }
+
+        return rotated;
     }
 
     private void ArmInactivityTimerNow()
@@ -327,13 +374,22 @@ public class Tetromino : MonoBehaviour
         {
             accumulatedFall -= 1f;
 
-            if (TryMove(Vector3.down)) continue;
+            // ▼ ここを変更
+            if (TryMove(Vector3.down))
+            {
+                // ↓キー長押しによるソフトドロップ中だけ、Move SE を鳴らす
+                if (fastDropping)
+                {
+                    SoundManager.Instance?.PlaySE(SeType.Move);
+                }
+                continue;
+            }
 
             grounded = true;
 
             if (hardDropOnlyLock)
             {
-                // Normalでは自動ロックしない（SpaceのみLock）
+                // Normalでは自動ロックしない（SのみLock）
                 break;
             }
 
@@ -352,6 +408,7 @@ public class Tetromino : MonoBehaviour
             CheckInactivityAutoLock();
         }
     }
+
 
     private void TryAutoLockIfNeeded()
     {
@@ -566,6 +623,9 @@ public class Tetromino : MonoBehaviour
         if (locked) return;
         locked = true;
 
+        // ★ 追加：ロック時のSE
+        SoundManager.Instance?.PlaySE(SeType.Lock);
+
         // ゴースト削除
         if (ghost != null)
         {
@@ -584,6 +644,12 @@ public class Tetromino : MonoBehaviour
 
         // ライン消去＆本数取得
         int linesCleared = board.ClearLinesAndGetCount();
+
+        // ★ 追加：ライン消去SE
+        if (linesCleared > 0)
+        {
+            SoundManager.Instance?.PlaySE(SeType.LineClear);
+        }
 
         // ===== 各Judgeへ通知 =====
         var tsdJudge = FindObjectOfType<TSpinDoubleJudge>();
@@ -610,7 +676,7 @@ public class Tetromino : MonoBehaviour
             }
         }
 
-        var renJudge = FindObjectOfType<RenJudge>();
+        var renJudge = FindObjectOfType<RENJudge>();
         if (renJudge != null)
         {
             renJudge.OnPieceLocked(this, linesCleared);

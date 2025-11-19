@@ -2,40 +2,35 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-public class RenJudge : MonoBehaviour
+public class RENJudge : MonoBehaviour
 {
     [Header("UI / Scene Settings")]
-    [Tooltip("成功時に表示するUIルート（クリアパネル）")]
     public GameObject clearUIRoot;
-
-    [Tooltip("ステージ一覧（テクニック選択など）のシーン名")]
     public string stageSelectSceneName = "TechniqueSelect";
-
-    [Tooltip("次のステージのシーン名（なければ空でOK）")]
     public string nextStageSceneName = "";
-
-    [Tooltip("クリア時に Time.timeScale = 0 にするか")]
     public bool stopTimeOnClear = true;
 
-    [Header("Result Text (任意)")]
-    [Tooltip("クリア時に最大REN数などを表示するテキスト")]
-    public Text resultLabel;
+    [Header("Clear Animation")]
+    public ClearFaridUI clearFaridUI;   // ClearFaridUI を入れる
+
+    [Header("UI (REN In Progress)")]
+    public Text renNowText;
+
+    [Header("UI (Separate Messages)")]
+    public Text renCountText;
+    public Text clearMessageText;
+    public Text timeText;
 
     public bool IsStageCleared { get; private set; } = false;
 
-    // RENカウンタ
-    private int currentRen = 0;
-    private int maxRen = 0;
+    int currentRen = 0;
+    int maxRen = 0;
 
-    // 難易度フラグ
-    private bool isEasyMode = false;
-    private bool isNormalMode = false;
-    private bool isHardMode = false;
+    bool isEasyMode = false;
+    bool isNormalMode = false;
+    bool isHardMode = false;
 
-    // Easy用：シーン名から決まる目標REN（REN_E_3 なら 3）
-    private int targetRenForEasy = 3;
-
-    private void Start()
+    void Start()
     {
         string sceneName = SceneManager.GetActiveScene().name;
 
@@ -43,122 +38,146 @@ public class RenJudge : MonoBehaviour
         isNormalMode = sceneName.Contains("REN_N");
         isHardMode   = sceneName.Contains("REN_H");
 
-        if (isEasyMode)
-        {
-            // 例: REN_E_3 / REN_E_4 / REN_E_5
-            int underscore = sceneName.LastIndexOf('_');
-            if (underscore >= 0 && underscore + 1 < sceneName.Length)
-            {
-                string numPart = sceneName.Substring(underscore + 1);
-                if (int.TryParse(numPart, out int n) && n > 0)
-                {
-                    targetRenForEasy = n;
-                }
-            }
-        }
-
         if (clearUIRoot != null)
             clearUIRoot.SetActive(false);
+
+        if (renNowText != null)
+            renNowText.text = "";
     }
 
-    /// <summary>
-    /// ミノがロックされたときに Tetromino 側から呼ぶ
-    /// </summary>
+    // ミノがロックされたときに Tetromino 側から呼ぶ
     public void OnPieceLocked(Tetromino piece, int linesCleared)
     {
         if (IsStageCleared) return;
 
-        // RENカウント：ラインが消えたかどうかだけを見る
         if (linesCleared > 0)
         {
             currentRen++;
-            if (currentRen > maxRen) maxRen = currentRen;
+            if (currentRen > maxRen)
+                maxRen = currentRen;
+
+            if (renNowText != null)
+                renNowText.text = $"{currentRen} REN";
         }
         else
         {
+            if (renNowText != null)
+                renNowText.text = "";
+
+            if (isEasyMode)
+            {
+                HandleStageClear();
+                return;
+            }
+
             currentRen = 0;
         }
 
-        // クリア条件チェック
-        if (isEasyMode)
+        if (isNormalMode || isHardMode)
         {
-            if (maxRen >= targetRenForEasy)
-            {
-                HandleStageClear();
-            }
-        }
-        else if (isNormalMode || isHardMode)
-        {
-            // とりあえず Normal / Hard とも 3REN でクリア
             const int threshold = 3;
             if (maxRen >= threshold)
             {
                 HandleStageClear();
             }
         }
-        else
-        {
-            // REN用ステージ以外では何もしない
-        }
     }
 
-    /// <summary>ステージクリア処理</summary>
-    private void HandleStageClear()
+    // ステージクリア時の処理
+    void HandleStageClear()
     {
         IsStageCleared = true;
+
         var controlUI = FindObjectOfType<GameControlUI>();
         if (controlUI != null)
             controlUI.HideAllUI();
-
-        // ★ 追加：タイマー停止
-        if (GameTimer.Instance != null)
-            GameTimer.Instance.StopTimer();
-
-        if (clearUIRoot != null)
-            clearUIRoot.SetActive(true);
 
         if (stopTimeOnClear)
             Time.timeScale = 0f;
 
         UpdateClearMessage();
-    }
 
-    /// <summary>クリアUI上のテキストを、達成RENに応じて変える</summary>
-    private void UpdateClearMessage()
-    {
-        if (resultLabel == null) return;
-
-        // クリアタイム（タイマー未配置なら 0）
-        float clearTime = (GameTimer.Instance != null) ? GameTimer.Instance.GetClearTime() : 0f;
-
-        // 既存ロジックをベースに「ランク or クリア文言」を作る
-        string head;
-        if (isEasyMode)
+        // REN数に応じて Farid の画像を選ぶ
+        if (clearFaridUI != null)
         {
-            if (maxRen >= targetRenForEasy)
-            {
-                // 目標達成
-                head = $"CLEAR! {targetRenForEasy} REN 達成！";
-            }
+            int spriteIndex = 0;
+
+            if (maxRen == 0)
+                spriteIndex = 0;          // 完全失敗
+            else if (maxRen <= 3)
+                spriteIndex = 1;          // 低 REN
+            else if (maxRen <= 5)
+                spriteIndex = 2;          // 普通
+            else if (maxRen <= 10)
+                spriteIndex = 3;          // かなり良い
             else
-            {
-                // 未達（通常ここは表示されない想定だが安全に）
-                int remain = Mathf.Max(0, targetRenForEasy - maxRen);
-                head = $"{maxRen} REN（あと {remain} でクリア）";
-            }
+                spriteIndex = 4;          // 神 REN
+
+            clearFaridUI.SetImageByIndex(spriteIndex);
+            clearFaridUI.Play();
         }
         else
         {
-            // Normal / Hard のランク表現（従来表示を踏襲）
-            if (maxRen < 3)       head = $"{maxRen} REN";
-            else if (maxRen == 3) head = $"Nice! {maxRen} REN!!";
-            else if (maxRen == 5) head = $"Great! {maxRen} REN!!";
-            else                  head = $"Excellent! {maxRen} REN!!!";
+            if (clearUIRoot != null)
+                clearUIRoot.SetActive(true);
+        }
+    }
+
+    string GetRenComment(int ren)
+    {
+        if (ren == 0)
+            return "..... Well, unfortunately the reality is cruel";
+        if (ren <= 3)
+            return "sigh... You better try hard...";
+        if (ren <= 5)
+            return "Not bad, but you could do more better";
+        if (ren <= 10)
+            return "Wow, you pretty good at REN";
+
+        return "You are God Tetris Player";
+    }
+
+    void UpdateClearMessage()
+    {
+        if (renCountText != null)
+            renCountText.text = $"You did {maxRen} REN";
+
+        if (clearMessageText != null)
+            clearMessageText.text = GetRenComment(maxRen);
+
+        if (timeText != null)
+            timeText.text = "";
+    }
+
+    // ボタン用
+    public void OnRetryButton()
+    {
+        Time.timeScale = 1f;
+        var current = SceneManager.GetActiveScene();
+        SceneManager.LoadScene(current.buildIndex);
+    }
+
+    public void OnNextStageButton()
+    {
+        if (string.IsNullOrEmpty(nextStageSceneName))
+        {
+            Debug.LogWarning("RENJudge: nextStageSceneName が設定されていません。");
+            return;
         }
 
-        // ★ ここからが追加ポイント：必ず MAX REN と TIME を下に出す
-        string msg = $"{head}\nMAX REN: {maxRen}\nTIME: {clearTime:F2}s";
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(nextStageSceneName);
+    }
 
-        resultLabel.text = msg;
+    public void OnStageSelectButton()
+    {
+        if (string.IsNullOrEmpty(stageSelectSceneName))
+        {
+            Debug.LogWarning("RENJudge: stageSelectSceneName が設定されていません。");
+            return;
+        }
+
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(stageSelectSceneName);
     }
 }
