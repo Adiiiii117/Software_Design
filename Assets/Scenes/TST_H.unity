@@ -1032,7 +1032,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 800067707}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: TSpinDoubleJudge, Assembly-CSharp
         m_MethodName: OnStageSelectButton
         m_Mode: 1
@@ -1528,8 +1528,8 @@ GameObject:
   - component: {fileID: 800067710}
   - component: {fileID: 800067709}
   - component: {fileID: 800067708}
-  - component: {fileID: 800067707}
   - component: {fileID: 800067706}
+  - component: {fileID: 800067711}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -1549,25 +1549,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 23f8ac3aed0c54d5bb80ea98aa3b9470, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  escMenuRoot: {fileID: 1591122859}
+  escMenuPanel: {fileID: 0}
   techniqueSelectSceneName: TechniqueSelect
   titleSceneName: Title
---- !u!114 &800067707
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 800067705}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d00615511c459439bbd9d163d3bd4f09, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  clearUIRoot: {fileID: 957114629}
-  stageSelectSceneName: StageSelect
-  nextStageSceneName: TSD_N1
-  stopTimeOnClear: 1
 --- !u!114 &800067708
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1615,6 +1599,25 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &800067711
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 800067705}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6df82d489c75b45ec9d134b77388fbd3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  clearUIRoot: {fileID: 0}
+  stageSelectSceneName: TechniqueSelect
+  nextStageSceneName: 
+  stopTimeOnClear: 1
+  clearFaridUI: {fileID: 0}
+  clearMessageText: {fileID: 0}
+  timeText: {fileID: 0}
 --- !u!1 &877065017
 GameObject:
   m_ObjectHideFlags: 0
@@ -2190,7 +2193,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 800067707}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: TSpinDoubleJudge, Assembly-CSharp
         m_MethodName: OnRetryButton
         m_Mode: 1
@@ -2701,7 +2704,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 800067707}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: TSpinDoubleJudge, Assembly-CSharp
         m_MethodName: OnNextStageButton
         m_Mode: 1
