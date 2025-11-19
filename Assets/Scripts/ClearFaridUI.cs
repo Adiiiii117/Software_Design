@@ -19,7 +19,7 @@ public class ClearFaridUI : MonoBehaviour
     public float popDuration = 0.15f;
 
     public GameObject stageClearPanel;
-    public float panelDelay = 0.5f;
+    public float panelDelay = 0.1f;
 
     bool isPlaying = false;
 
