@@ -1371,7 +1371,7 @@ GameObject:
   - component: {fileID: 938794575}
   - component: {fileID: 938794574}
   m_Layer: 5
-  m_Name: HowToUsePanel
+  m_Name: HowToPlayPanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4448,7 +4448,7 @@ GameObject:
   - component: {fileID: 2113317235}
   - component: {fileID: 2113317234}
   m_Layer: 5
-  m_Name: HowToUse
+  m_Name: HowToPlay
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
