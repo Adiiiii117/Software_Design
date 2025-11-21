@@ -3745,7 +3745,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 23f8ac3aed0c54d5bb80ea98aa3b9470, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  escMenuPanel: {fileID: 0}
+  escMenuPanel: {fileID: 429607859}
   techniqueSelectSceneName: TechniqueSelect
   titleSceneName: Title
 --- !u!114 &2123638905
@@ -3762,7 +3762,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   clearUIRoot: {fileID: 804919479}
   stageSelectSceneName: StageSelect
-  nextStageSceneName: TSD_N1
+  nextStageSceneName: TSD_E3
   stopTimeOnClear: 1
   clearFaridUI: {fileID: 1305137952}
   clearMessageText: {fileID: 1049481222}

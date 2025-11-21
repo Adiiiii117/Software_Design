@@ -3042,7 +3042,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   clearUIRoot: {fileID: 1733823329}
   stageSelectSceneName: TST_StageSelect
-  nextStageSceneName: 
+  nextStageSceneName: TST_E7
   stopTimeOnClear: 1
   clearFaridUI: {fileID: 1986532856}
   clearMessageText: {fileID: 1401409516}
