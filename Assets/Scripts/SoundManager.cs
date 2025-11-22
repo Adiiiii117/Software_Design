@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public enum SeType
 {
@@ -7,7 +8,6 @@ public enum SeType
     HardDrop,
     Lock,
     LineClear,
-    TSpinSuccess,
     StageClear,
     StageFail,
     Hold,
@@ -27,47 +27,39 @@ public class SoundManager : MonoBehaviour
     // シングルトン
     public static SoundManager Instance { get; private set; }
 
-    [Header("BGM")]
-    public AudioSource bgmSource;      // BGM 用オーディオソース
+    [Header("BGM Sources & Clips")]
+    public AudioSource bgmSource;
     public AudioClip titleBGM;
     public AudioClip menuBGM;
     public AudioClip inGameBGM;
 
-    [Header("SE Source")]
-    public AudioSource seSource;       // SE 用オーディオソース（PlayOneShot 用）
+    [Header("BGM Volumes (per BGM, 0〜1)")]
+    public float titleBGMVolume = 1f;
+    public float menuBGMVolume = 1f;
+    public float inGameBGMVolume = 1f;
 
-    [Header("SE Clips")]
+    [Header("SE Source & Clips")]
+    public AudioSource seSource;
+
     public AudioClip moveSE;
     public AudioClip rotateSE;
     public AudioClip hardDropSE;
     public AudioClip lockSE;
     public AudioClip lineClearSE;
-    public AudioClip tSpinSuccessSE;
     public AudioClip stageClearSE;
     public AudioClip stageFailSE;
     public AudioClip holdSE;
     public AudioClip buttonClickSE;
 
-    [Header("SE Volumes (per clip, 0〜1)")]
-    [Tooltip("ミノ移動音の個別ボリューム")]
-    public float moveSEVolume        = 1f;
-    [Tooltip("回転音の個別ボリューム")]
-    public float rotateSEVolume      = 1f;
-    [Tooltip("ハードドロップ音の個別ボリューム")]
-    public float hardDropSEVolume    = 1f;
-    [Tooltip("ロック（接地）音の個別ボリューム")]
-    public float lockSEVolume        = 1f;
-    [Tooltip("ライン消去音の個別ボリューム")]
-    public float lineClearSEVolume   = 1f;
-    [Tooltip("Tスピン成功音の個別ボリューム")]
-    public float tSpinSuccessSEVolume = 1f;
-    [Tooltip("ステージクリア音の個別ボリューム")]
-    public float stageClearSEVolume  = 1f;
-    [Tooltip("ステージ失敗音の個別ボリューム")]
-    public float stageFailSEVolume   = 1f;
-    [Tooltip("ホールド音の個別ボリューム")]
-    public float holdSEVolume        = 1f;
-    [Tooltip("ボタンクリック音の個別ボリューム")]
+    [Header("SE Volumes (per SE, 0〜1)")]
+    public float moveSEVolume = 1f;
+    public float rotateSEVolume = 1f;
+    public float hardDropSEVolume = 1f;
+    public float lockSEVolume = 1f;
+    public float lineClearSEVolume = 1f;
+    public float stageClearSEVolume = 1f;
+    public float stageFailSEVolume = 1f;
+    public float holdSEVolume = 1f;
     public float buttonClickSEVolume = 1f;
 
     private void Awake()
@@ -82,107 +74,96 @@ public class SoundManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        // 万が一 AudioSource がアタッチされていない場合、ここで自動追加
+        // BGM Source 自動生成
         if (bgmSource == null)
         {
             bgmSource = gameObject.AddComponent<AudioSource>();
             bgmSource.loop = true;
             bgmSource.playOnAwake = false;
         }
+
+        // SE Source 自動生成
         if (seSource == null)
         {
             seSource = gameObject.AddComponent<AudioSource>();
             seSource.loop = false;
             seSource.playOnAwake = false;
         }
+
+        // ★ シーン読み込みイベント登録
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
-    // ==== SE 再生 ====
+    private void OnDestroy()
+    {
+        // イベント解除
+        if (Instance == this)
+        {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+        }
+    }
 
+    // ========================================================================
+    //                               SE 再生
+    // ========================================================================
     public void PlaySE(SeType type)
     {
         if (seSource == null) return;
 
         AudioClip clip = null;
-        float volumeScale = 1f;  // このSE専用の倍率（0〜1 推奨）
+        float volumeScale = 1f;
 
         switch (type)
         {
-            case SeType.Move:
-                clip = moveSE;
-                volumeScale = moveSEVolume;
-                break;
-
-            case SeType.Rotate:
-                clip = rotateSE;
-                volumeScale = rotateSEVolume;
-                break;
-
-            case SeType.HardDrop:
-                clip = hardDropSE;
-                volumeScale = hardDropSEVolume;
-                break;
-
-            case SeType.Lock:
-                clip = lockSE;
-                volumeScale = lockSEVolume;
-                break;
-
-            case SeType.LineClear:
-                clip = lineClearSE;
-                volumeScale = lineClearSEVolume;
-                break;
-
-            case SeType.TSpinSuccess:
-                clip = tSpinSuccessSE;
-                volumeScale = tSpinSuccessSEVolume;
-                break;
-
-            case SeType.StageClear:
-                clip = stageClearSE;
-                volumeScale = stageClearSEVolume;
-                break;
-
-            case SeType.StageFail:
-                clip = stageFailSE;
-                volumeScale = stageFailSEVolume;
-                break;
-
-            case SeType.Hold:
-                clip = holdSE;
-                volumeScale = holdSEVolume;
-                break;
-
-            case SeType.ButtonClick:
-                clip = buttonClickSE;
-                volumeScale = buttonClickSEVolume;
-                break;
+            case SeType.Move:        clip = moveSE;        volumeScale = moveSEVolume; break;
+            case SeType.Rotate:      clip = rotateSE;      volumeScale = rotateSEVolume; break;
+            case SeType.HardDrop:    clip = hardDropSE;    volumeScale = hardDropSEVolume; break;
+            case SeType.Lock:        clip = lockSE;        volumeScale = lockSEVolume; break;
+            case SeType.LineClear:   clip = lineClearSE;   volumeScale = lineClearSEVolume; break;
+            case SeType.StageClear:  clip = stageClearSE;  volumeScale = stageClearSEVolume; break;
+            case SeType.StageFail:   clip = stageFailSE;   volumeScale = stageFailSEVolume; break;
+            case SeType.Hold:        clip = holdSE;        volumeScale = holdSEVolume; break;
+            case SeType.ButtonClick: clip = buttonClickSE; volumeScale = buttonClickSEVolume; break;
         }
 
         if (clip != null && volumeScale > 0f)
         {
-            // 実際の最終音量 = seSource.volume（全体） × volumeScale（個別）
             seSource.PlayOneShot(clip, volumeScale);
         }
     }
 
-    // BGM 再生 
-
+    // ========================================================================
+    //                               BGM 再生
+    // ========================================================================
     public void PlayBGM(BgmType type)
     {
         if (bgmSource == null) return;
 
         AudioClip clip = null;
+        float volume = 1f;
 
         switch (type)
         {
-            case BgmType.Title:  clip = titleBGM;   break;
-            case BgmType.Menu:   clip = menuBGM;    break;
-            case BgmType.InGame: clip = inGameBGM;  break;
-            case BgmType.None:   clip = null;       break;
+            case BgmType.Title:
+                clip = titleBGM;
+                volume = titleBGMVolume;
+                break;
+
+            case BgmType.Menu:
+                clip = menuBGM;
+                volume = menuBGMVolume;
+                break;
+
+            case BgmType.InGame:
+                clip = inGameBGM;
+                volume = inGameBGMVolume;
+                break;
+
+            case BgmType.None:
+                clip = null;
+                break;
         }
 
-        // BGM なしにしたい場合
         if (clip == null)
         {
             bgmSource.Stop();
@@ -190,34 +171,71 @@ public class SoundManager : MonoBehaviour
             return;
         }
 
-        // 同じ曲がすでに鳴っているなら何もしない
+        // すでに同じ曲が再生中ならスキップ
         if (bgmSource.clip == clip && bgmSource.isPlaying) return;
 
         bgmSource.clip = clip;
+        bgmSource.volume = volume;
         bgmSource.loop = true;
         bgmSource.Play();
     }
 
-    public void StopBGM()
+    // ========================================================================
+    //                         シーン名で BGM 自動切替
+    // ========================================================================
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        if (bgmSource == null) return;
-        bgmSource.Stop();
+        string sceneName = scene.name;
+
+        // --- タイトル ---
+        if (sceneName.Contains("Title"))
+        {
+            PlayBGM(BgmType.Title);
+            return;
+        }
+
+        // --- メニュー系シーン (TechniqueSelect / StageSelect) ---
+        if (sceneName.Contains("TechniqueSelect") ||
+            sceneName.Contains("StageSelect"))
+        {
+            PlayBGM(BgmType.Menu);
+            return;
+        }
+
+        // --- ゲーム中ステージ (REN/TSD/TST 系の E/N/H) ---
+        if (sceneName.Contains("REN_E") ||
+            sceneName.Contains("REN_N") ||
+            sceneName.Contains("REN_H") ||
+            sceneName.Contains("TSD_E") ||
+            sceneName.Contains("TSD_N") ||
+            sceneName.Contains("TSD_H") ||
+            sceneName.Contains("TST_E") ||
+            sceneName.Contains("TST_N") ||
+            sceneName.Contains("TST_H"))
+        {
+            PlayBGM(BgmType.InGame);
+            return;
+        }
+
+        // --- それ以外 ---
+        PlayBGM(BgmType.None);
     }
 
-    // ==== ポーズ連動（任意） ====
-
+    // ========================================================================
+    //                               ポーズ連動
+    // ========================================================================
     public void SetPaused(bool paused)
     {
         if (bgmSource != null)
         {
             if (paused) bgmSource.Pause();
-            else        bgmSource.UnPause();
+            else bgmSource.UnPause();
         }
 
         if (seSource != null)
         {
             if (paused) seSource.Pause();
-            else        seSource.UnPause();
+            else seSource.UnPause();
         }
     }
 }
