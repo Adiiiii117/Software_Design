@@ -12,7 +12,7 @@ public class EscMenuController : MonoBehaviour
 
     [Header("Scene Names")]
     [Tooltip("テクニック選択画面のシーン名")]
-    public string techniqueSelectSceneName = "TechniqueSelect";
+    public string stageSelectSceneName = "StageSelect";
 
     [Tooltip("タイトル画面のシーン名")]
     public string titleSceneName = "Title";
@@ -93,14 +93,14 @@ public class EscMenuController : MonoBehaviour
     // =========================================================
     //  既存のボタン機能
     // =========================================================
-    public void OnTechniqueSelectButton()
+    public void OnStageSelectButton()
     {
         SoundManager.Instance?.PlaySE(SeType.ButtonClick);
 
         Time.timeScale = 1f;
 
-        if (string.IsNullOrEmpty(techniqueSelectSceneName)) return;
-        SceneManager.LoadScene(techniqueSelectSceneName);
+        if (string.IsNullOrEmpty(stageSelectSceneName)) return;
+        SceneManager.LoadScene(stageSelectSceneName);
     }
 
     public void OnTitleButton()

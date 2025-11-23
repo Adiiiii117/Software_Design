@@ -45,7 +45,7 @@ public class TSpinDoubleJudge : MonoBehaviour
             if (linesCleared == 2)
             {
                 Debug.Log("[TSD] SUCCESS (Easy): 2 lines cleared -> HandleStageClear()");
-                SoundManager.Instance?.PlaySE(SeType.TSpinSuccess);
+                
                 SoundManager.Instance?.PlaySE(SeType.StageClear);
                 HandleStageClear();
             }
@@ -61,7 +61,7 @@ public class TSpinDoubleJudge : MonoBehaviour
             // Normal / Hard: T で 2ライン消したときだけクリア
             if (linesCleared == 2)
             {
-                SoundManager.Instance?.PlaySE(SeType.TSpinSuccess);
+                
                 SoundManager.Instance?.PlaySE(SeType.StageClear);
                 HandleStageClear();
             }

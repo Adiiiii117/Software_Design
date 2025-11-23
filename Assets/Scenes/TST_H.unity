@@ -1114,9 +1114,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   bgmSource: {fileID: 356498053}
-  titleBGM: {fileID: 0}
-  menuBGM: {fileID: 0}
-  inGameBGM: {fileID: 0}
+  titleBGM: {fileID: 8300000, guid: b46e0f331f16749788be1d1109b25b53, type: 3}
+  menuBGM: {fileID: 8300000, guid: 20b69119c06024f7c9d051262e999f04, type: 3}
+  inGameBGM: {fileID: 8300000, guid: 89163ef7011ae4fdc9eef6dd7319dbd9, type: 3}
+  titleBGMVolume: 0.2
+  menuBGMVolume: 0.2
+  inGameBGMVolume: 0.15
   seSource: {fileID: 356498052}
   moveSE: {fileID: 8300000, guid: 01e6aadaa02144aefba2d3ffd45c60d2, type: 3}
   rotateSE: {fileID: 8300000, guid: 28be81e181aea4ea2b17337426385fa8, type: 3}
@@ -1129,10 +1132,9 @@ MonoBehaviour:
   buttonClickSE: {fileID: 8300000, guid: df62977ad713443819f70a9c2ca483e6, type: 3}
   moveSEVolume: 0.15
   rotateSEVolume: 0.15
-  hardDropSEVolume: 0.05
+  hardDropSEVolume: 0.02
   lockSEVolume: 0.15
   lineClearSEVolume: 1
-  tSpinSuccessSEVolume: 1
   stageClearSEVolume: 1
   stageFailSEVolume: 1
   holdSEVolume: 0.3

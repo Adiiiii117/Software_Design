@@ -2497,13 +2497,15 @@ MonoBehaviour:
   titleBGM: {fileID: 0}
   menuBGM: {fileID: 0}
   inGameBGM: {fileID: 0}
+  titleBGMVolume: 1
+  menuBGMVolume: 1
+  inGameBGMVolume: 1
   seSource: {fileID: 1101802777}
   moveSE: {fileID: 8300000, guid: 01e6aadaa02144aefba2d3ffd45c60d2, type: 3}
   rotateSE: {fileID: 8300000, guid: 28be81e181aea4ea2b17337426385fa8, type: 3}
   hardDropSE: {fileID: 8300000, guid: e3382891c1edc456999eab9deb53bac1, type: 3}
   lockSE: {fileID: 8300000, guid: 1585d1e9d0bc74ee7b75ce9dd75292f9, type: 3}
   lineClearSE: {fileID: 8300000, guid: 468dc6797504e46aab541ed967d2fbc8, type: 3}
-  tSpinSuccessSE: {fileID: 0}
   stageClearSE: {fileID: 8300000, guid: 4ff98dd2297264424961fb4938740e67, type: 3}
   stageFailSE: {fileID: 8300000, guid: 0ae0bc170034449e8896085b2351118c, type: 3}
   holdSE: {fileID: 0}
@@ -2513,7 +2515,6 @@ MonoBehaviour:
   hardDropSEVolume: 0.1
   lockSEVolume: 0.5
   lineClearSEVolume: 1
-  tSpinSuccessSEVolume: 1
   stageClearSEVolume: 1
   stageFailSEVolume: 1
   holdSEVolume: 1

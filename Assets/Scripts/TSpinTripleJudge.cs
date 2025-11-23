@@ -43,7 +43,6 @@ public class TSpinTripleJudge : MonoBehaviour
             if (linesCleared == 3)
             {
                 Debug.Log("[TST] SUCCESS (Easy): 3 lines cleared -> HandleStageClear()");
-                SoundManager.Instance?.PlaySE(SeType.TSpinSuccess);
                 SoundManager.Instance?.PlaySE(SeType.StageClear);
                 HandleStageClear();
             }
@@ -58,7 +57,6 @@ public class TSpinTripleJudge : MonoBehaviour
         {
             if (linesCleared == 3)
             {
-                SoundManager.Instance?.PlaySE(SeType.TSpinSuccess);
                 SoundManager.Instance?.PlaySE(SeType.StageClear);
                 HandleStageClear();
             }
