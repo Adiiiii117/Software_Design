@@ -2139,8 +2139,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   escMenuPanel: {fileID: 1892194385}
-  howToPlayPanel: {fileID: 0}
-  techniqueSelectSceneName: TechniqueSelect
+  howToPlayPanel: {fileID: 125139505}
+  stageSelectSceneName: TSD_StageSelect
   titleSceneName: Title
 --- !u!1 &887900423
 GameObject:

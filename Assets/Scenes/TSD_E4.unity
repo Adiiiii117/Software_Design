@@ -3071,8 +3071,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   escMenuPanel: {fileID: 325938557}
-  howToPlayPanel: {fileID: 0}
-  techniqueSelectSceneName: TechniqueSelect
+  howToPlayPanel: {fileID: 1602390863}
+  stageSelectSceneName: StageSelect
   titleSceneName: Title
 --- !u!114 &1655762367
 MonoBehaviour:

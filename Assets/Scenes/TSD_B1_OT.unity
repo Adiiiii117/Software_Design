@@ -2020,8 +2020,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   escMenuPanel: {fileID: 614703597}
-  howToPlayPanel: {fileID: 0}
-  techniqueSelectSceneName: TechniqueSelect
+  howToPlayPanel: {fileID: 626637516}
+  stageSelectSceneName: TSD_StageSelect
   titleSceneName: Title
 --- !u!114 &1265424787
 MonoBehaviour:
@@ -2646,7 +2646,6 @@ MonoBehaviour:
   popScale: 1.1
   popDuration: 0.15
   stageClearPanel: {fileID: 1769750587}
-  panelDelay: 0.5
 --- !u!1 &1473340039
 GameObject:
   m_ObjectHideFlags: 0
