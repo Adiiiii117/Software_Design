@@ -2506,7 +2506,7 @@ GameObject:
   m_Component:
   - component: {fileID: 966249581}
   - component: {fileID: 966249580}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Tetris_Trainer_BG
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2574,7 +2574,7 @@ Transform:
   m_GameObject: {fileID: 966249579}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 4.4208, y: 9.3046, z: 1}
+  m_LocalPosition: {x: 4.4208, y: 9.3046, z: 2}
   m_LocalScale: {x: 4.6180363, y: 2.5543647, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

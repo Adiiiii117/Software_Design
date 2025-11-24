@@ -1258,7 +1258,7 @@ GameObject:
   m_Component:
   - component: {fileID: 539169085}
   - component: {fileID: 539169084}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Tetris_Trainer_BG
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2233,7 +2233,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 495650988}
         m_TargetAssemblyTypeName: EscMenuController, Assembly-CSharp
-        m_MethodName: OnTechniqueSelectButton
+        m_MethodName: OnStageSelectButton
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

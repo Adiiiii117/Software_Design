@@ -692,7 +692,7 @@ GameObject:
   m_Component:
   - component: {fileID: 159338778}
   - component: {fileID: 159338777}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Tetris_Trainer_BG
   m_TagString: Untagged
   m_Icon: {fileID: 0}
