@@ -22,8 +22,8 @@ public class GameTimer : MonoBehaviour
 
         Instance = this;
 
-        // ★ ルートの GameObject につけた状態でこれを呼ぶ
-        DontDestroyOnLoad(gameObject);
+        // ★ DontDestroyOnLoad を削除！
+        //  → ステージごとに新しく生成されるようになる
     }
 
     private void Update()
