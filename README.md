@@ -1,48 +1,103 @@
-# Software Design documentation
+Installation Instructions
+Download Unity Hub Please download and install Unity Hub from the official Unity website. When you start Unity Hub for the first time, you will be asked to log in. If you do not have an account, please create one. https://docs.unity3d.com/hub/manual/InstallHub.html
 
-1. Installation instructions: Step-by-step details on setting up the project
-   environment. I will follow your instructions step by step and grade
-   based on the results.
-   まず unity hub をダウンロードしてください。
-   unity hub を使用して、unity をダウンロードしてください。
-   ここで大切なのが、2022.3.55f のバージョンをダウンロードすることです。
-   開発中に使用したのがこのバージョンのため、開発者の意図する形での表示を正しく行うには、このバージョンのダウンロードが必須です。
+Install Unity 2022.3.55f1 Inside Unity Hub, install Unity Editor version 2022.3.55f1. This version is required because the project was developed and tested using this exact version. Using a different version may cause unexpected behavior. https://unity.com/ja/releases/editor/whats-new/2022.3.55f1
 
-【git hub 上からクローンする場合】
-続いて
-https://github.com/Adiiiii117/Software_Desig
-このリポジトリをあなたの git hub 上で fork してください
-次に、その fork したリポジトリをローカルのターミナルでクローンしてください。
-この時、VScode もダウンロードしておくとソースの確認、および Script ディレクトリにある C＃で書かれたゲームロジックの修正に便利です。
-このあと、Tetris-Prototype branch にチェックアウトしてください。今回の正式なバージョンはこちらで管理されています。
-Tetris-Prototype にチェックアウトされている状態を保ったまま、unity hub にてクローンしてきたディレクトリを add ボタンから追加し、バージョンは 2022.3.55f を選択してください。
-最後に、画面サイズは 1920\*1080 を選択するようにしてください。
-これで、unity 上でこのアプリが動くようになります。
+If Unity requests the installation of Visual Studio or related components during setup, please allow all of them.
 
-->>追加で unity 上の作業があれば追加する
+Clone the Repository Clone the following GitHub repository to your local machine: https://github.com/Adiiiii117/Software_Design
 
-2. Running instructions: How to execute and interact with the software.
-   Unity 上での再生法
-   script に書くと何ができる
-   画面遷移の設定方法
+(Optional but recommended) Install Visual Studio Code for editing and reviewing C# scripts inside the Scripts directory.
 
-3. File structure overview: Brief explanation of important files and
-   folders.
+Check Out the Correct Branch After cloning, switch to the branch: Tetris-Prototype This branch contains the final version of the project code.
 
-   このプロジェクトにおいて特に大切なのは、git hub 上で管理されている Assets, Packeges, ProjectSettings です。git hub 管理外のファイルについては、unity hub に追加した際に自動で生成されます。
+Running Instructions Playing the Game in Unity
+Assuming you completed section 1:
 
-4. Feature documentation: Explanation of implemented features and how to use them.
-   このアプリケーションで実際に遊ぶには＜ここは必ずついか＞からダウンロードしたものから＜ここは必ず追加＞を実行して下さい。一度ダウンロードすれば、オフライン上で機能するようになっています。このゲームは、T-spin-double, T-spin-triple, REN といったテトリスにおけるレベルの高い技術を初心者が練習するためのアプリです。
-   ＜ここは必ず追加＞を押すことでテトリミノの落下を停止させ、ゆっくりブロックの置き方を考えることができます。
-5. Attribution: A clear list of any code or assets sourced externally,
-   including links or citations. One submission per group is enough:
-   make sure you include all team members name in your submission.
-   Ensure all files are properly organized and included. Missing files will result in
-   an inability to grade your project.
+Open the Project in Unity Hub In Unity Hub, click Add, then select the folder you cloned. Make sure to open the project using Unity 2022.3.55f1.
 
-Repo for Tetris Code
+Set the Screen Resolution When running the project, set the screen resolution to 1920 × 1080. The UI is optimized specifically for this resolution.
 
-Caution Was developed on Unity Ver 2022.3.55f1. Which is no longer supported / should be updated during game release
+Build Settings Open Build Settings and add all Scenes to the build list. This ensures that scene transitions work correctly.
 
-Caution Screen Size should be fixed to 1920\*1080 resolution only
+Once this is complete, the game can be played inside Unity. Please run the Scene named “Title”.
 
+Playing the Packaged Build
+
+If you want to play the packaged version instead of using Unity: please see the attached Tetris Dojo - Build -in.zip This zip contains the packaged builds for both macOS and Windows.
+
+Choose the version that matches your operating system. Launching the executable file will start the game.
+
+Additional Rules and Limitations for This Version
+
+In Normal Mode, pieces lock only when performing a hard drop (S key). There is no auto-lock delay after touching the ground, unlike standard Tetris. This allows players to stack freely without time pressure.
+
+In Easy and Basic modes, the stage resets automatically after a mistake. In Normal and Hard modes, there is no auto-reset. Instead, you can press the → button at the top of the screen to reset manually.
+
+If you press the HOW TO USE button on the title screen, you must press Esc to return to the original menu.
+
+In official Tetris, the "Next" piece is the one at the top of the queue. In this application, the bottom piece in the queue is treated as the next piece.
+
+In TST and TSD Hard Mode, the “Next” display does not appear until after the first piece has been placed.
+
+In REN Mode, clearing 3 REN triggers a success condition. To practice longer REN chains, further updates would be required.
+
+This project was developed using Unity 2022.3.55f1. The game logic and all scripts were written by the development team.
+
+File Structure Overview
+The most important folders in this Unity project are:
+
+Assets/ All unique components developed for this game are stored here. For example:
+
+Scripts: Game logic
+
+Scenes: Screen layout and transitions
+
+Prefabs: Definitions of each Tetrimino piece This folder contains all scenes, prefabs, sprites, and C# scripts.
+
+ProjectSettings/ Contains Unity project configurations such as input settings, graphics settings, and editor preferences. Scene transitions and build settings may need to be configured manually when cloned from GitHub, making this folder especially important.
+
+All other files will be generated automatically by Unity when the project is opened.
+
+Attribution
+External resources used:
+
+https://downloads.khinsider.com/game-soundtracks/album/tetris-gb
+
+https://soundeffect-lab.info/sound/button/
+
+https://www.springin.org/sound-stock/category/retrogame/
+
+https://otologic.jp/free/se/game-action01.html
+
+https://arspark.jp/material/game/
+
+Reference Games and Materials:
+
+TETR.IO: https://tetr.io/
+
+Puyo Puyo Tetris: https://store-jp.nintendo.com/item/software/D70010000029306
+
+Tetris 99: https://store-jp.nintendo.com/item/software/D70010000018526
+
+Official Tetris: https://play.tetris.com/
+
+Kukuru no Biboroku: https://sakurameiya.hatenablog.com/entry/2024/02/08/010242
+
+Mugen 4-REN Tetris: https://shiwehi.com/tetris/game/i4lr.php
+
+T-Spin guide: https://shiwehi.com/tetris/template/tspin.php
+
+Unity built-in packages were used. All files except Assets and ProjectSettings are automatically generated by Unity. Both macOS and Windows builds were created through Unity.
+
+Team Members:
+
+Kohsuke Kikawada
+
+Mashiro Yamada
+
+Ayaka Nakajima
+
+Aditya Kedar Kulkarni
+
+Note: This project was developed using Unity 2022.3.55f1, which may no l
