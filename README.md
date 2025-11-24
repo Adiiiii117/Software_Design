@@ -100,5 +100,3 @@ Mashiro Yamada
 Ayaka Nakajima
 
 Aditya Kedar Kulkarni
-
-Note: This project was developed using Unity 2022.3.55f1, which may no l
