@@ -206,6 +206,7 @@ public class SoundManager : MonoBehaviour
         if (sceneName.Contains("REN_E") ||
             sceneName.Contains("REN_N") ||
             sceneName.Contains("REN_H") ||
+            sceneName.Contains("TSD_B") ||
             sceneName.Contains("TSD_E") ||
             sceneName.Contains("TSD_N") ||
             sceneName.Contains("TSD_H") ||
