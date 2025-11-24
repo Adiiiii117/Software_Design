@@ -4801,6 +4801,8 @@ MonoBehaviour:
   renCountText: {fileID: 1615830905}
   clearMessageText: {fileID: 727713101}
   timeText: {fileID: 0}
+  normalRequiredRen: 3
+  hardRequiredRen: 5
 --- !u!114 &1556775400
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5273,7 +5275,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: TimeCount
+  m_Text: RenCount
 --- !u!222 &1615830906
 CanvasRenderer:
   m_ObjectHideFlags: 0

@@ -5630,6 +5630,8 @@ MonoBehaviour:
   renCountText: {fileID: 1169997258}
   clearMessageText: {fileID: 239224941}
   timeText: {fileID: 0}
+  normalRequiredRen: 3
+  hardRequiredRen: 3
 --- !u!114 &1610907738
 MonoBehaviour:
   m_ObjectHideFlags: 0

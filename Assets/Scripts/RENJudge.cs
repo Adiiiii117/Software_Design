@@ -6,20 +6,24 @@ public class RENJudge : MonoBehaviour
 {
     [Header("UI / Scene Settings")]
     public GameObject clearUIRoot;
-    public string stageSelectSceneName = "TechniqueSelect";
+    public string stageSelectSceneName = "REN_StageSelect";
     public string nextStageSceneName = "";
     public bool stopTimeOnClear = true;
 
     [Header("Clear Animation")]
-    public ClearFaridUI clearFaridUI;   // ClearFaridUI を入れる
+    public ClearFaridUI clearFaridUI;
 
-    [Header("UI (REN In Progress)")]
+    [Header("UI (In-Game REN)")]
     public Text renNowText;
 
-    [Header("UI (Separate Messages)")]
+    [Header("UI (Result)")]
     public Text renCountText;
     public Text clearMessageText;
     public Text timeText;
+
+    [Header("Requirements")]
+    public int normalRequiredRen = 3;
+    public int hardRequiredRen = 5;
 
     public bool IsStageCleared { get; private set; } = false;
 
@@ -38,14 +42,10 @@ public class RENJudge : MonoBehaviour
         isNormalMode = sceneName.Contains("REN_N");
         isHardMode   = sceneName.Contains("REN_H");
 
-        if (clearUIRoot != null)
-            clearUIRoot.SetActive(false);
-
-        if (renNowText != null)
-            renNowText.text = "";
+        if (clearUIRoot != null) clearUIRoot.SetActive(false);
+        if (renNowText != null) renNowText.text = "";
     }
 
-    // ミノがロックされたときに Tetromino 側から呼ぶ
     public void OnPieceLocked(Tetromino piece, int linesCleared)
     {
         if (IsStageCleared) return;
@@ -53,130 +53,106 @@ public class RENJudge : MonoBehaviour
         if (linesCleared > 0)
         {
             currentRen++;
-            if (currentRen > maxRen)
-                maxRen = currentRen;
-
-            if (renNowText != null)
-                renNowText.text = $"{currentRen} REN";
-        }
-        else
-        {
-            if (renNowText != null)
-                renNowText.text = "";
-
-            if (isEasyMode)
-            {
-                HandleStageClear();
-                return;
-            }
-
-            currentRen = 0;
+            if (currentRen > maxRen) maxRen = currentRen;
+            if (renNowText != null) renNowText.text = $"{currentRen} REN";
+            return;
         }
 
-        if (isNormalMode || isHardMode)
-        {
-            const int threshold = 3;
-            if (maxRen >= threshold)
-            {
-                HandleStageClear();
-            }
-        }
+        if (renNowText != null) renNowText.text = "";
+
+        bool cleared = false;
+
+        if (isEasyMode) cleared = true;
+        else if (isNormalMode) cleared = (maxRen >= normalRequiredRen);
+        else if (isHardMode) cleared = (maxRen >= hardRequiredRen);
+
+        currentRen = 0;
+
+        if (cleared) HandleStageClear();
     }
 
-    // ステージクリア時の処理
     void HandleStageClear()
     {
         IsStageCleared = true;
 
         var controlUI = FindObjectOfType<GameControlUI>();
-        if (controlUI != null)
-            controlUI.HideAllUI();
-
-        if (stopTimeOnClear)
-            Time.timeScale = 0f;
+        if (controlUI != null) controlUI.HideAllUI();
 
         UpdateClearMessage();
 
-        // REN数に応じて Farid の画像を選ぶ
+        int spriteIndex = GetSpriteIndexByRen(maxRen);
+
         if (clearFaridUI != null)
         {
-            int spriteIndex = 0;
-
-            if (maxRen == 0)
-                spriteIndex = 0;          // 完全失敗
-            else if (maxRen <= 3)
-                spriteIndex = 1;          // 低 REN
-            else if (maxRen <= 5)
-                spriteIndex = 2;          // 普通
-            else if (maxRen <= 10)
-                spriteIndex = 3;          // かなり良い
-            else
-                spriteIndex = 4;          // 神 REN
-
             clearFaridUI.SetImageByIndex(spriteIndex);
             clearFaridUI.Play();
         }
+
+        if (clearUIRoot != null) clearUIRoot.SetActive(true);
+
+        if (stopTimeOnClear) Time.timeScale = 0f;
+    }
+
+    int GetSpriteIndexByRen(int ren)
+    {
+        if (isEasyMode)
+        {
+            if (ren == 0) return 0;
+            if (ren <= 3) return 1;
+            if (ren <= 5) return 2;
+            if (ren <= 10) return 3;
+            return 4;
+        }
         else
         {
-            if (clearUIRoot != null)
-                clearUIRoot.SetActive(true);
+            if (ren == 0) return 0;
+            if (ren == 1) return 1;
+            if (ren == 2) return 2;
+            if (ren <= 4) return 3;
+            return 4;
         }
     }
 
     string GetRenComment(int ren)
     {
-        if (ren == 0)
-            return "..... Well, unfortunately the reality is cruel";
-        if (ren <= 3)
-            return "sigh... You better try hard...";
-        if (ren <= 5)
-            return "Not bad, but you could do more better";
-        if (ren <= 10)
-            return "Wow, you pretty good at REN";
-
+        if (ren == 0) return "..... Well, unfortunately the reality is cruel";
+        if (ren <= 3) return "sigh... You better try hard...";
+        if (ren <= 5) return "Not bad, but you could do more better";
+        if (ren <= 10) return "Wow, you pretty good at REN";
         return "You are God Tetris Player";
     }
 
     void UpdateClearMessage()
     {
-        if (renCountText != null)
-            renCountText.text = $"You did {maxRen} REN";
+        if (renCountText != null) renCountText.text = $"You did {maxRen} REN";
 
         if (clearMessageText != null)
-            clearMessageText.text = GetRenComment(maxRen);
+        {
+            if (isNormalMode || isHardMode)
+                clearMessageText.text = "You are now pro at REN!";
+            else
+                clearMessageText.text = GetRenComment(maxRen);
+        }
 
-        if (timeText != null)
-            timeText.text = "";
+        if (timeText != null) timeText.text = "";
     }
 
-    // ボタン用
     public void OnRetryButton()
     {
         Time.timeScale = 1f;
-        var current = SceneManager.GetActiveScene();
-        SceneManager.LoadScene(current.buildIndex);
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     public void OnNextStageButton()
     {
-        if (string.IsNullOrEmpty(nextStageSceneName))
-        {
-            Debug.LogWarning("RENJudge: nextStageSceneName が設定されていません。");
-            return;
-        }
-
+        if (string.IsNullOrEmpty(nextStageSceneName)) return;
         Time.timeScale = 1f;
         SceneManager.LoadScene(nextStageSceneName);
     }
 
     public void OnStageSelectButton()
     {
-        if (string.IsNullOrEmpty(stageSelectSceneName))
-        {
-            Debug.LogWarning("RENJudge: stageSelectSceneName が設定されていません。");
-            return;
-        }
-
+        if (string.IsNullOrEmpty(stageSelectSceneName)) return;
         Time.timeScale = 1f;
         SceneManager.LoadScene(stageSelectSceneName);
     }
