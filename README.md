@@ -1,11 +1,29 @@
-# Software_Design
-Repo for Tetris Code
+## Screenshots
 
-**Caution**
-Was developed on Unity Ver 2022.5.55f1. 
-Which is no longer supported / should be updated
-during game release
+### Title Screen
 
-**Caution**
-Screen Size should be fixed to 1920*1080 resolution only
+![Title](images/screenshots/Title.png)
 
+### Practice Mode Selection
+
+![Practice Mode](images/screenshots/Practice_mode_select.png)
+
+### T-Spin Double Practice
+
+![TSD](images/screenshots/TSD_B1_field.png)
+
+### T-Spin Triple Practice
+
+![TST](images/screenshots/TST_E1_field.png)
+
+### REN Practice
+
+![REN](images/screenshots/REN_H_field.png)
+
+### Control Guide
+
+![Controls](images/screenshots/Control_guide.png)
+
+### Game Clear
+
+![Game Clear](images/screenshots/Game_clear.png)
