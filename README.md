@@ -1,29 +1,37 @@
+# Tetris Trainer (Unity Project)
+
+A practice tool for advanced Tetris techniques such as T-Spin Double, T-Spin Triple, and REN chains.
+
+This application allows players to practice specific setups in an offline environment and slow down gameplay to better understand piece placement.
+
+Developed using Unity and C# as part of a Software Design course project.
+
 ## Screenshots
 
 ### Title Screen
 
-![Title](images/screenshots/Title.png)
+![Title](images/Title.png)
 
 ### Practice Mode Selection
 
-![Practice Mode](images/screenshots/Practice_mode_select.png)
+![Practice Mode](images/Practice_mode_select.png)
 
 ### T-Spin Double Practice
 
-![TSD](images/screenshots/TSD_B1_field.png)
+![TSD](images/TSD_B1_field.png)
 
 ### T-Spin Triple Practice
 
-![TST](images/screenshots/TST_E1_field.png)
+![TST](images/TST_E1_field.png)
 
 ### REN Practice
 
-![REN](images/screenshots/REN_H_field.png)
+![REN](images/REN_H_field.png)
 
 ### Control Guide
 
-![Controls](images/screenshots/Control_guide.png)
+![Controls](images/Control_guide.png)
 
 ### Game Clear
 
-![Game Clear](images/screenshots/Game_clear.png)
+![Game Clear](images/Game_clear.png)
