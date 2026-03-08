@@ -12,6 +12,10 @@ Developed using Unity and C# as part of a Software Design course project.
 
 ![Title](images/Title.png)
 
+### Control Guide
+
+![Controls](images/Control_guide.png)
+
 ### Practice Mode Selection
 
 ![Practice Mode](images/Practice_mode_select.png)
@@ -27,10 +31,6 @@ Developed using Unity and C# as part of a Software Design course project.
 ### REN Practice
 
 ![REN](images/REN_H_field.png)
-
-### Control Guide
-
-![Controls](images/Control_guide.png)
 
 ### Game Clear
 
